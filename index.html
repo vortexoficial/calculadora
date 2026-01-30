@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GHOST_LAB // CALCULATOR FINAL V2</title>
+    <title>GHOST_LAB // CALCULATOR FINAL V3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -11,17 +11,17 @@
             --matrix-green: #00ff41;
             --matrix-dark: #0d0208;
             --terminal-bg: #000000;
-            --panel-bg: rgba(0, 20, 0, 0.85);
+            --panel-bg: rgba(0, 20, 0, 0.95); /* Levemente mais opaco para o menu ficar legivel */
             --border-dim: #004400;
             --border-bright: #00ff41;
             --text-glow: 0 0 5px rgba(0, 255, 65, 0.5);
         }
 
-        /* --- GLOBAL RESET PARA PREVENIR SCROLL --- */
+        /* --- GLOBAL RESET --- */
         html, body {
             width: 100%;
             max-width: 100%;
-            overflow-x: hidden; /* Corta qualquer excesso lateral */
+            overflow-x: hidden;
             margin: 0;
             padding: 0;
             background-color: var(--terminal-bg);
@@ -40,7 +40,7 @@
         body::before {
             content: " ";
             display: block;
-            position: fixed; /* Fixed para não afetar scroll */
+            position: fixed;
             top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             z-index: 2;
@@ -54,21 +54,19 @@
             margin: 0 auto;
             position: relative;
             z-index: 3;
-            padding: 15px; /* Padding movido para container seguro */
-            padding-bottom: 60px;
-            overflow: hidden; /* Segurança extra */
+            padding: 15px;
+            padding-bottom: 80px;
         }
 
         h1 {
             text-align: center;
-            font-size: 1.8em; /* Levemente menor para mobile */
+            font-size: 1.8em;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--matrix-green);
             padding-bottom: 15px;
-            letter-spacing: 2px; /* Reduzi espaçamento para evitar quebra */
+            letter-spacing: 2px;
             text-shadow: var(--text-glow);
             text-transform: uppercase;
-            word-wrap: break-word;
         }
 
         /* --- GRID SYSTEM --- */
@@ -87,9 +85,7 @@
             border: 1px solid var(--border-dim);
             background: var(--panel-bg);
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.05);
-            transition: border-color 0.3s;
             width: 100%;
-            overflow: hidden; /* Garante que filhos não vazem */
         }
 
         .panel-header {
@@ -106,7 +102,7 @@
             text-overflow: ellipsis;
         }
 
-        /* --- TABELA DE INPUTS --- */
+        /* --- TABELA E INPUTS --- */
         .calc-row {
             display: grid;
             grid-template-columns: 1.4fr 2fr;
@@ -123,7 +119,7 @@
             display: flex;
             align-items: center;
             background: rgba(0, 20, 0, 0.3);
-            font-size: 0.85em; /* Ajuste fonte mobile */
+            font-size: 0.85em;
             word-break: break-word;
         }
 
@@ -133,7 +129,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-width: 0; /* CRUCIAL: Permite encolher flex items */
+            min-width: 0;
         }
 
         .desc {
@@ -146,10 +142,10 @@
             text-overflow: ellipsis;
         }
 
-        /* --- INPUTS HACKER BLINDADOS --- */
-        input, select {
+        /* Input text/number padrão */
+        input {
             width: 100%;
-            min-width: 0; /* CRUCIAL para mobile */
+            min-width: 0;
             background: #000;
             border: 1px solid #004400;
             color: var(--matrix-green);
@@ -159,29 +155,125 @@
             font-weight: bold;
             outline: none;
             text-transform: uppercase;
-            
-            /* Segurança de Layout */
-            max-width: 100%; 
-            white-space: nowrap;
-            overflow: hidden; 
-            text-overflow: ellipsis;
+        }
+        input:focus {
+            border-color: var(--matrix-green);
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+            background: #001100;
         }
 
-        select option { background-color: #000; color: var(--matrix-green); }
+        /* --- CUSTOM SELECT (Substituto do Nativo) --- */
+        /* Esconde o select original */
+        select {
+            display: none !important; 
+        }
+
+        /* Container do Select Customizado */
+        .custom-select-wrapper {
+            position: relative;
+            user-select: none;
+            width: 100%;
+        }
+
+        /* A caixa fechada (Trigger) */
+        .custom-select-trigger {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: #000;
+            border: 1px solid #004400;
+            color: var(--matrix-green);
+            padding: 8px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .custom-select-trigger:after {
+            content: "▼";
+            font-size: 10px;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .custom-select.open .custom-select-trigger {
+            border-color: var(--matrix-green);
+            background: #001100;
+        }
+        
+        .custom-select.open .custom-select-trigger:after {
+            transform: rotate(180deg);
+        }
+
+        /* Lista de Opções (Dropdown) */
+        .custom-options {
+            position: absolute;
+            display: block;
+            top: 100%; left: 0; right: 0;
+            background: #000;
+            border: 1px solid var(--matrix-green);
+            border-top: none;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            max-height: 250px; /* Scroll se for muito grande */
+            overflow-y: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.9);
+        }
+
+        .custom-select.open .custom-options {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .custom-option {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #002200;
+            color: #00aa22;
+            background: #000500;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .custom-option:hover {
+            color: #000;
+            background: var(--matrix-green);
+        }
+
+        .custom-option.selected {
+            color: var(--matrix-green);
+            background: #001100;
+            border-left: 3px solid var(--matrix-green);
+        }
+
+        /* Scrollbar hacker para o menu */
+        .custom-options::-webkit-scrollbar { width: 5px; }
+        .custom-options::-webkit-scrollbar-track { background: #000; }
+        .custom-options::-webkit-scrollbar-thumb { background: #004400; }
+
+        /* --------------------------- */
 
         .input-group-append {
             display: flex;
             align-items: center;
             width: 100%;
-            max-width: 100%;
         }
-        
         .input-group-append input { 
             border-right: none; 
             flex: 1; 
-            min-width: 0; /* CRUCIAL */
         }
-        
         .unit-tag {
             background: #002200;
             border: 1px solid #004400;
@@ -193,7 +285,7 @@
             align-items: center;
             justify-content: center;
             height: 34px; 
-            flex-shrink: 0; /* Impede que a unidade suma */
+            flex-shrink: 0;
         }
 
         .readonly-input {
@@ -212,13 +304,12 @@
             border-top: 1px solid var(--matrix-green);
         }
 
-        /* --- VIALS BOX --- */
         .vials-box {
             margin-top: 20px;
             border: 1px solid var(--matrix-green);
             background: #000;
             display: grid;
-            grid-template-columns: 110px 1fr; /* Reduzi label fixo */
+            grid-template-columns: 110px 1fr;
             box-shadow: var(--text-glow);
             width: 100%;
             overflow: hidden;
@@ -236,7 +327,6 @@
             text-align: center;
         }
 
-        /* --- GRÁFICOS RESPONSIVOS --- */
         .charts-wrapper {
             margin-top: 30px;
             display: grid;
@@ -244,10 +334,7 @@
             gap: 20px;
             width: 100%;
         }
-        
-        @media (max-width: 800px) { 
-            .charts-wrapper { grid-template-columns: 1fr; } 
-        }
+        @media (max-width: 800px) { .charts-wrapper { grid-template-columns: 1fr; } }
 
         .chart-card {
             background: #000;
@@ -255,10 +342,9 @@
             padding: 10px;
             position: relative;
             width: 100%;
-            min-width: 0; /* Impede overflow do flex item */
+            min-width: 0;
             overflow: hidden;
         }
-
         .chart-card h3 {
             text-align: center;
             margin: 0 0 10px 0;
@@ -268,14 +354,12 @@
             border-bottom: 1px dashed var(--border-dim);
             padding-bottom: 8px;
         }
-        
         .chart-container-inner {
             position: relative;
             width: 100%;
-            height: 250px; /* Altura fixa controlada */
+            height: 250px;
         }
 
-        /* --- LOADER --- */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999;
@@ -318,7 +402,6 @@
         <h1>CALCULATOR</h1>
 
         <div class="main-grid">
-            
             <div class="panel">
                 <div class="panel-header" data-lang="h_std">Steroid Homebrew Calculator</div>
                 
@@ -623,11 +706,95 @@
                     clearInterval(interval);
                     txt.innerText = "SYSTEM READY";
                     setTimeout(() => { screen.style.opacity = '0'; setTimeout(() => screen.classList.add('hidden'), 500); }, 300);
+                    
+                    // Inicializa tudo
                     initCharts();
+                    setupCustomSelects(); // ATIVA OS MENUS CUSTOMIZADOS
                     calc();
                 }
             }, 30);
         };
+
+        // --- CUSTOM SELECT LOGIC (HACKER THEME ON MOBILE) ---
+        function setupCustomSelects() {
+            const selects = document.querySelectorAll('select');
+            
+            selects.forEach(select => {
+                // Cria o wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-select-wrapper';
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(select); // Move o select para dentro
+
+                // Cria o Trigger (Caixa Visível)
+                const trigger = document.createElement('div');
+                trigger.className = 'custom-select-trigger';
+                
+                // Texto inicial
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.textContent = selectedOption ? selectedOption.textContent : 'SELECT';
+                
+                // Cria a lista de opções (Dropdown)
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'custom-options';
+
+                // Popula a lista com base no select original
+                Array.from(select.options).forEach(opt => {
+                    const customOpt = document.createElement('div');
+                    customOpt.className = 'custom-option';
+                    customOpt.textContent = opt.textContent;
+                    customOpt.dataset.value = opt.value;
+                    
+                    if (opt.disabled) {
+                        customOpt.style.opacity = '0.5';
+                        customOpt.style.pointerEvents = 'none';
+                    }
+
+                    if (opt.selected) customOpt.classList.add('selected');
+
+                    // Ação de clique na opção
+                    customOpt.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Impede fechar ao clicar
+                        select.value = this.dataset.value; // Atualiza select original
+                        trigger.textContent = this.textContent; // Atualiza texto
+                        
+                        // Atualiza classe 'selected' visual
+                        optionsDiv.querySelectorAll('.custom-option').forEach(el => el.classList.remove('selected'));
+                        this.classList.add('selected');
+
+                        // Fecha o menu
+                        wrapper.querySelector('.custom-select').classList.remove('open');
+                        
+                        // Força o evento 'change' para o sistema calcular
+                        select.dispatchEvent(new Event('change'));
+                    });
+
+                    optionsDiv.appendChild(customOpt);
+                });
+
+                // Estrutura final do custom select
+                const customSelect = document.createElement('div');
+                customSelect.className = 'custom-select';
+                customSelect.appendChild(trigger);
+                customSelect.appendChild(optionsDiv);
+                wrapper.appendChild(customSelect);
+
+                // Abrir/Fechar ao clicar no trigger
+                trigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Fecha outros abertos
+                    document.querySelectorAll('.custom-select').forEach(el => {
+                        if(el !== customSelect) el.classList.remove('open');
+                    });
+                    customSelect.classList.toggle('open');
+                });
+            });
+
+            // Fecha ao clicar fora
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
+            });
+        }
 
         // --- CHARTS CONFIG ---
         let chartNormal = null;
@@ -646,28 +813,14 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { 
-                            boxWidth: 10, 
-                            padding: 8, 
-                            font: { size: 9 } 
-                        }
+                        labels: { boxWidth: 10, padding: 8, font: { size: 9 } }
                     }
                 },
-                elements: {
-                    arc: {
-                        borderWidth: 1,
-                        borderColor: '#000'
-                    }
-                },
+                elements: { arc: { borderWidth: 1, borderColor: '#000' } },
                 cutout: '50%'
             };
 
-            const colors = {
-                oil: '#002200',      
-                powder: '#00ff41',   
-                ba: '#008800',       
-                bb: '#005500'        
-            };
+            const colors = { oil: '#002200', powder: '#00ff41', ba: '#008800', bb: '#005500' };
 
             chartNormal = new Chart(ctx1, {
                 type: 'doughnut',
@@ -698,10 +851,8 @@
 
         function updateCharts(nData, aData) {
             if (!chartNormal || !chartAdjusted) return;
-
             chartNormal.data.datasets[0].data = [nData.oil, nData.powder, nData.ba, nData.bb];
             chartNormal.update();
-
             chartAdjusted.data.datasets[0].data = [aData.oil, aData.powder, aData.ba, aData.bb];
             chartAdjusted.update();
         }
@@ -716,6 +867,7 @@
             }
         });
 
+        // Handler especial para atualizar o displacement quando o select muda
         document.getElementById('compound').addEventListener('change', function() {
             if(this.value) {
                 document.getElementById('displacement').value = this.value;
