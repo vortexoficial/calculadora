@@ -2,8 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GHOST_LAB // CALCULATOR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GHOST_LAB // CALCULATOR FINAL V2</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
             --matrix-green: #00ff41;
@@ -15,26 +17,30 @@
             --text-glow: 0 0 5px rgba(0, 255, 65, 0.5);
         }
 
-        * {
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        body {
+        /* --- GLOBAL RESET PARA PREVENIR SCROLL --- */
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden; /* Corta qualquer excesso lateral */
+            margin: 0;
+            padding: 0;
             background-color: var(--terminal-bg);
             color: var(--matrix-green);
             font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
             font-size: 13px;
-            overflow-x: hidden;
         }
 
-        /* Efeito Scanlines (TV Antiga) */
+        * {
+            box-sizing: border-box;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Scanlines */
         body::before {
             content: " ";
             display: block;
-            position: absolute;
+            position: fixed; /* Fixed para não afetar scroll */
             top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             z-index: 2;
@@ -43,22 +49,26 @@
         }
 
         .container {
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             position: relative;
             z-index: 3;
+            padding: 15px; /* Padding movido para container seguro */
             padding-bottom: 60px;
+            overflow: hidden; /* Segurança extra */
         }
 
         h1 {
             text-align: center;
-            font-size: 2.5em;
+            font-size: 1.8em; /* Levemente menor para mobile */
             margin-bottom: 20px;
             border-bottom: 2px solid var(--matrix-green);
             padding-bottom: 15px;
-            letter-spacing: 6px;
+            letter-spacing: 2px; /* Reduzi espaçamento para evitar quebra */
             text-shadow: var(--text-glow);
             text-transform: uppercase;
+            word-wrap: break-word;
         }
 
         /* --- GRID SYSTEM --- */
@@ -66,18 +76,21 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+            width: 100%;
         }
 
-        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { 
+            .main-grid { grid-template-columns: 1fr; } 
+        }
 
         .panel {
             border: 1px solid var(--border-dim);
             background: var(--panel-bg);
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.05);
             transition: border-color 0.3s;
+            width: 100%;
+            overflow: hidden; /* Garante que filhos não vazem */
         }
-
-        .panel:hover { border-color: var(--border-bright); }
 
         .panel-header {
             background: rgba(0, 50, 0, 0.9);
@@ -88,25 +101,30 @@
             font-size: 1.1em;
             border-bottom: 1px solid var(--border-dim);
             letter-spacing: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* --- LINHAS DA TABELA --- */
+        /* --- TABELA DE INPUTS --- */
         .calc-row {
             display: grid;
             grid-template-columns: 1.4fr 2fr;
             border-bottom: 1px solid var(--border-dim);
             align-items: stretch;
+            width: 100%;
         }
         .calc-row:last-child { border-bottom: none; }
         
         .calc-label {
-            padding: 12px;
+            padding: 10px;
             border-right: 1px solid var(--border-dim);
             font-weight: bold;
             display: flex;
             align-items: center;
             background: rgba(0, 20, 0, 0.3);
-            font-size: 0.9em;
+            font-size: 0.85em; /* Ajuste fonte mobile */
+            word-break: break-word;
         }
 
         .calc-input-area {
@@ -115,81 +133,75 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-width: 0; /* Correção para Grid overflow */
+            min-width: 0; /* CRUCIAL: Permite encolher flex items */
         }
 
         .desc {
-            font-size: 0.7em;
+            font-size: 0.65em;
             color: #008800;
             margin-top: 4px;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* --- INPUTS HACKER --- */
+        /* --- INPUTS HACKER BLINDADOS --- */
         input, select {
             width: 100%;
+            min-width: 0; /* CRUCIAL para mobile */
             background: #000;
             border: 1px solid #004400;
             color: var(--matrix-green);
-            padding: 8px 10px;
+            padding: 8px 5px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             outline: none;
-            transition: 0.3s;
             text-transform: uppercase;
             
-            /* Correção de Layout Mobile */
+            /* Segurança de Layout */
             max-width: 100%; 
             white-space: nowrap;
             overflow: hidden; 
             text-overflow: ellipsis;
         }
 
-        /* Estilização das Opções do Dropdown (Para ficarem escuras) */
-        select option {
-            background-color: #000;
-            color: var(--matrix-green);
-            padding: 10px;
-        }
+        select option { background-color: #000; color: var(--matrix-green); }
 
-        input:focus, select:focus {
-            border-color: var(--matrix-green);
-            box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
-            background: #001100;
-        }
-
-        /* Grupo de Input com Unidade na direita */
         .input-group-append {
             display: flex;
             align-items: center;
+            width: 100%;
+            max-width: 100%;
         }
+        
         .input-group-append input { 
             border-right: none; 
+            flex: 1; 
+            min-width: 0; /* CRUCIAL */
         }
+        
         .unit-tag {
             background: #002200;
             border: 1px solid #004400;
             border-left: none;
             color: var(--matrix-green);
-            padding: 8px 12px;
-            font-size: 11px;
-            height: 100%;
+            padding: 0 8px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 50px;
+            height: 34px; 
+            flex-shrink: 0; /* Impede que a unidade suma */
         }
 
-        /* Campos Somente Leitura (Results) */
         .readonly-input {
             background: rgba(0, 255, 65, 0.05) !important;
             border-color: #003300 !important;
             color: #88ff88 !important;
-            cursor: default;
         }
 
-        /* --- CABEÇALHO DE RESULTADOS --- */
         .results-divider {
             background: var(--border-dim);
             color: #000;
@@ -200,14 +212,16 @@
             border-top: 1px solid var(--matrix-green);
         }
 
-        /* --- VIALS BOX (RODAPÉ) --- */
+        /* --- VIALS BOX --- */
         .vials-box {
             margin-top: 20px;
             border: 1px solid var(--matrix-green);
             background: #000;
             display: grid;
-            grid-template-columns: 150px 1fr;
+            grid-template-columns: 110px 1fr; /* Reduzi label fixo */
             box-shadow: var(--text-glow);
+            width: 100%;
+            overflow: hidden;
         }
         .vials-label {
             background: var(--matrix-green);
@@ -216,8 +230,49 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 10px 5px;
             text-transform: uppercase;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        /* --- GRÁFICOS RESPONSIVOS --- */
+        .charts-wrapper {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        @media (max-width: 800px) { 
+            .charts-wrapper { grid-template-columns: 1fr; } 
+        }
+
+        .chart-card {
+            background: #000;
+            border: 1px solid var(--border-dim);
+            padding: 10px;
+            position: relative;
+            width: 100%;
+            min-width: 0; /* Impede overflow do flex item */
+            overflow: hidden;
+        }
+
+        .chart-card h3 {
+            text-align: center;
+            margin: 0 0 10px 0;
+            color: var(--matrix-green);
+            text-transform: uppercase;
+            font-size: 0.9em;
+            border-bottom: 1px dashed var(--border-dim);
+            padding-bottom: 8px;
+        }
+        
+        .chart-container-inner {
+            position: relative;
+            width: 100%;
+            height: 250px; /* Altura fixa controlada */
         }
 
         /* --- LOADER --- */
@@ -228,21 +283,20 @@
             justify-content: center; align-items: center;
         }
         .hidden { display: none !important; }
-        
         .progress-frame {
-            width: 300px; padding: 4px; 
+            width: 70%; max-width: 300px; padding: 4px; 
             border: 1px solid var(--matrix-green);
             box-shadow: 0 0 10px var(--matrix-green);
             margin-top: 10px;
         }
         .progress-bar { height: 20px; background: var(--matrix-green); width: 0%; }
 
-        /* Botão Idioma Discreto */
         #lang-btn {
-            position: fixed; bottom: 15px; right: 15px;
+            position: fixed; bottom: 10px; right: 10px;
             color: #004400; border: 1px solid #004400;
-            padding: 5px 8px; font-size: 10px; cursor: pointer;
+            padding: 4px 6px; font-size: 9px; cursor: pointer;
             transition: 0.3s; z-index: 100;
+            background: #000;
         }
         #lang-btn:hover { color: var(--matrix-green); border-color: var(--matrix-green); }
 
@@ -523,60 +577,145 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
         <div class="vials-box">
             <div class="vials-label" data-lang="l_vials">No of Vials</div>
-            <div style="display: flex; align-items: center; padding: 0 15px;">
-                <input type="text" id="vials_total" readonly style="border:none; font-size: 1.5em; background: transparent; box-shadow: none;">
-                <span style="color: #008800; font-size: 0.9em; white-space: nowrap;">(10.5 ml per vial)</span>
+            <div style="display: flex; align-items: center; padding: 0 10px; flex:1; min-width: 0;">
+                <input type="text" id="vials_total" readonly style="border:none; font-size: 1.3em; background: transparent; box-shadow: none; width: 50px;">
+                <span style="color: #008800; font-size: 0.8em; white-space: nowrap; overflow:hidden; text-overflow:ellipsis;">(10.5 ml per vial)</span>
+            </div>
+        </div>
+
+        <div class="charts-wrapper">
+            <div class="chart-card">
+                <h3 data-lang="c_norm">Composition (Normal)</h3>
+                <div class="chart-container-inner">
+                    <canvas id="chartNormal"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 data-lang="c_adj">Composition (Adjusted)</h3>
+                <div class="chart-container-inner">
+                    <canvas id="chartAdjusted"></canvas>
+                </div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- ANIMAÇÃO DE BOOT ---
+        // --- BOOT ANIMATION ---
         window.onload = function() {
             const bar = document.getElementById('loader-bar');
             const txt = document.getElementById('boot-text');
             const per = document.getElementById('boot-percent');
             const screen = document.getElementById('boot-screen');
-            
             let width = 0;
-            const names = ["ANALYZING...", "DECRYPTING...", "LOADING MODULES...", "CALCULATING...", "ACCESSING..."];
-            
+            const names = ["ANALYZING...", "DECRYPTING...", "LOADING CHARTS...", "CALCULATING...", "ACCESSING..."];
             const interval = setInterval(() => {
                 width += 2;
                 bar.style.width = width + "%";
                 per.innerText = width + "%";
-                
-                if (width % 15 === 0) {
-                    txt.innerText = names[Math.floor(Math.random() * names.length)];
-                }
-
+                if (width % 15 === 0) txt.innerText = names[Math.floor(Math.random() * names.length)];
                 if (width >= 100) {
                     clearInterval(interval);
                     txt.innerText = "SYSTEM READY";
-                    setTimeout(() => {
-                        screen.style.opacity = '0';
-                        setTimeout(() => screen.classList.add('hidden'), 500);
-                    }, 300);
-                    calc(); // Calcula inicial
+                    setTimeout(() => { screen.style.opacity = '0'; setTimeout(() => screen.classList.add('hidden'), 500); }, 300);
+                    initCharts();
+                    calc();
                 }
-            }, 30); // 1.5s total (30ms * 50 steps)
+            }, 30);
         };
 
-        // --- LÓGICA DE CÁLCULO ---
+        // --- CHARTS CONFIG ---
+        let chartNormal = null;
+        let chartAdjusted = null;
+
+        function initCharts() {
+            Chart.defaults.color = '#00ff41';
+            Chart.defaults.font.family = "'Courier New', monospace";
+
+            const ctx1 = document.getElementById('chartNormal').getContext('2d');
+            const ctx2 = document.getElementById('chartAdjusted').getContext('2d');
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false, 
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            boxWidth: 10, 
+                            padding: 8, 
+                            font: { size: 9 } 
+                        }
+                    }
+                },
+                elements: {
+                    arc: {
+                        borderWidth: 1,
+                        borderColor: '#000'
+                    }
+                },
+                cutout: '50%'
+            };
+
+            const colors = {
+                oil: '#002200',      
+                powder: '#00ff41',   
+                ba: '#008800',       
+                bb: '#005500'        
+            };
+
+            chartNormal = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Oil', 'Compound VOL', 'BA', 'BB'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb],
+                        hoverOffset: 4
+                    }]
+                },
+                options: commonOptions
+            });
+
+            chartAdjusted = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Oil', 'Compound VOL', 'BA', 'BB'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb],
+                        hoverOffset: 4
+                    }]
+                },
+                options: commonOptions
+            });
+        }
+
+        function updateCharts(nData, aData) {
+            if (!chartNormal || !chartAdjusted) return;
+
+            chartNormal.data.datasets[0].data = [nData.oil, nData.powder, nData.ba, nData.bb];
+            chartNormal.update();
+
+            chartAdjusted.data.datasets[0].data = [aData.oil, aData.powder, aData.ba, aData.bb];
+            chartAdjusted.update();
+        }
+
+        // --- CALCULATION LOGIC ---
         const inputs = ['compound', 'volume', 'dosage', 'displacement', 'ba_conc', 'bb_conc', 'purity', 'sel_purity', 'sel_cheeky'];
         inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', calc);
-            document.getElementById(id).addEventListener('change', calc);
+            const el = document.getElementById(id);
+            if(el) {
+                el.addEventListener('input', calc);
+                el.addEventListener('change', calc);
+            }
         });
 
-        // Atualizar displacement ao trocar composto (se usuario nao editou)
         document.getElementById('compound').addEventListener('change', function() {
             if(this.value) {
                 document.getElementById('displacement').value = this.value;
@@ -585,29 +724,22 @@
         });
 
         function calc() {
-            // -- Inputs Base --
             let vol = parseFloat(document.getElementById('volume').value) || 0;
             let dose = parseFloat(document.getElementById('dosage').value) || 0;
             let disp = parseFloat(document.getElementById('displacement').value) || 0;
             let ba_p = parseFloat(document.getElementById('ba_conc').value) || 0;
             let bb_p = parseFloat(document.getElementById('bb_conc').value) || 0;
 
-            // Se não houver displacement definido, não calcula resultados para evitar erros visuais
-            if (disp === 0) {
-                // Opcional: Zerar campos se quiser
-                return; 
-            }
+            if (disp === 0) return;
 
-            // -- Cálculo Esquerda (Padrão) --
+            // Standard
             let powder_g = (vol * dose) / 1000;
             let powder_vol = powder_g * disp;
             let ba_vol = vol * (ba_p / 100);
             let bb_vol = vol * (bb_p / 100);
             let oil = vol - (powder_vol + ba_vol + bb_vol);
-            
             if(oil < 0) oil = 0;
 
-            // Update UI Left
             setVal('res_oil', oil);
             setVal('res_comp_g', powder_g);
             setVal('res_comp_vol', powder_vol);
@@ -615,66 +747,59 @@
             setVal('res_bb', bb_vol);
             setVal('res_total', vol);
 
-            // -- Cálculo Direita (Ajustado) --
+            // Adjusted
             let purity = parseFloat(document.getElementById('purity').value) || 100;
-            let selPurityVal = document.getElementById('sel_purity').value;
-            let selCheekyVal = document.getElementById('sel_cheeky').value;
-            
-            let do_adj = selPurityVal === 'yes';
-            let do_cheeky = selCheekyVal === 'yes';
+            let do_adj = document.getElementById('sel_purity').value === 'yes';
+            let do_cheeky = document.getElementById('sel_cheeky').value === 'yes';
 
-            // 1. Ajuste Pureza
             let w1 = powder_g;
-            if (do_adj && purity > 0) {
-                w1 = powder_g * (100 / purity);
-            }
+            if (do_adj && purity > 0) w1 = powder_g * (100 / purity);
             setVal('adj_weight_1', w1);
 
-            // 2. Ajuste Cheeky (+5%)
             let w_final = w1;
-            if (do_cheeky) {
-                w_final = w1 * 1.05;
-            }
+            if (do_cheeky) w_final = w1 * 1.05;
             setVal('adj_weight_final', w_final);
 
-            // 3. Volumes Finais
-            // O volume de pó aumenta, então o volume de óleo deve diminuir para manter o Total igual.
             let new_powder_vol = w_final * disp;
             let new_oil = vol - (new_powder_vol + ba_vol + bb_vol);
-
             if(new_oil < 0) new_oil = 0;
 
-            // Update UI Right
             setVal('adj_res_oil', new_oil);
             setVal('adj_res_comp', w_final);
             setVal('adj_res_comp_vol', new_powder_vol);
-            setVal('adj_res_ba', ba_vol); // BA não muda
-            setVal('adj_res_bb', bb_vol); // BB não muda
-            setVal('adj_res_total', vol); // Volume final alvo
+            setVal('adj_res_ba', ba_vol);
+            setVal('adj_res_bb', bb_vol);
+            setVal('adj_res_total', vol);
 
-            // -- Vials --
             let vials = vol / 10.5;
             document.getElementById('vials_total').value = Math.floor(vials);
+
+            updateCharts(
+                { oil: oil, powder: powder_vol, ba: ba_vol, bb: bb_vol },
+                { oil: new_oil, powder: new_powder_vol, ba: ba_vol, bb: bb_vol }
+            );
         }
 
         function setVal(id, val) {
             document.getElementById(id).value = val.toFixed(2);
         }
 
-        // --- IDIOMA ---
+        // --- LANGUAGE ---
         let lang = 'en';
         const txt = {
             en: {
                 h_std: "Steroid Homebrew Calculator", h_adj: "Adjusted For Overdose",
                 l_comp: "Select Compound", l_oil: "Oil in ml's", l_dose: "Dosage in mg",
                 l_disp: "Displacement Factor", l_pure: "Compound Purity", l_adj: "Adjust for 100%",
-                l_cheeky: "Add a cheeky bit?", l_vials: "No of Vials"
+                l_cheeky: "Add a cheeky bit?", l_vials: "No of Vials",
+                c_norm: "Composition (Normal)", c_adj: "Composition (Adjusted)"
             },
             pt: {
                 h_std: "Calculadora Padrão", h_adj: "Ajuste de Sobredose",
                 l_comp: "Selecionar Composto", l_oil: "Volume Óleo (ml)", l_dose: "Dosagem (mg)",
                 l_disp: "Fator Deslocamento", l_pure: "Pureza do Pó", l_adj: "Ajustar p/ 100%",
-                l_cheeky: "Adicionar chorinho?", l_vials: "Qtd. Frascos"
+                l_cheeky: "Adicionar chorinho?", l_vials: "Qtd. Frascos",
+                c_norm: "Composição (Normal)", c_adj: "Composição (Ajustada)"
             }
         };
 
@@ -683,6 +808,11 @@
             for (let k in txt[lang]) {
                 let el = document.querySelector(`[data-lang="${k}"]`);
                 if (el) el.innerText = txt[lang][k];
+            }
+            if(chartNormal) {
+                chartNormal.options.plugins.legend.labels.font.family = "'Courier New', monospace"; 
+                chartNormal.update();
+                chartAdjusted.update();
             }
         }
     </script>
