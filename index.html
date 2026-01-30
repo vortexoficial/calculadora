@@ -3,384 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GHOST_LAB // CALCULATOR FINAL V3</title>
+    <title>GHOST_LAB // CALCULATOR FINAL SATURATED</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
-            --matrix-green: #00ff41;
+            /* --- CORES: VERDE HACKER + AZUL SATURADO (CORRIGIDO) --- */
+            --matrix-green: #00ff41; 
             --matrix-dark: #0d0208;
+            
+            /* AZUL ELÉTRICO PURO (Saturação Máxima) */
+            --electric-blue: #0033ff; 
+            --blue-glow: 0 0 15px rgba(0, 51, 255, 0.9); /* Brilho intenso */
+
             --terminal-bg: #000000;
-            --panel-bg: rgba(0, 20, 0, 0.95); /* Levemente mais opaco para o menu ficar legivel */
+            --panel-bg: rgba(0, 20, 0, 0.95);
             --border-dim: #004400;
-            --border-bright: #00ff41;
             --text-glow: 0 0 5px rgba(0, 255, 65, 0.5);
         }
 
-        /* --- GLOBAL RESET --- */
+        /* --- GLOBAL RESET & SCROLL FIX --- */
         html, body {
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
+            width: 100%; max-width: 100%; overflow-x: hidden; /* Trava scroll horizontal */
+            margin: 0; padding: 0;
             background-color: var(--terminal-bg);
             color: var(--matrix-green);
             font-family: 'Courier New', Courier, monospace;
             font-size: 13px;
         }
+        
+        /* Padding seguro para mobile */
+        body { padding: 15px; }
 
-        * {
-            box-sizing: border-box;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
         /* Scanlines */
         body::before {
-            content: " ";
-            display: block;
-            position: fixed;
+            content: " "; display: block; position: fixed;
             top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+            z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none;
         }
 
         .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 3;
-            padding: 15px;
-            padding-bottom: 80px;
+            width: 100%; max-width: 1200px; margin: 0 auto; position: relative;
+            z-index: 3; padding-bottom: 60px;
         }
 
+        /* Título Azul Saturado */
         h1 {
-            text-align: center;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--matrix-green);
-            padding-bottom: 15px;
-            letter-spacing: 2px;
-            text-shadow: var(--text-glow);
-            text-transform: uppercase;
+            text-align: center; font-size: 2.2em; margin-bottom: 20px;
+            border-bottom: 2px solid var(--electric-blue);
+            padding-bottom: 15px; letter-spacing: 4px;
+            text-shadow: var(--blue-glow); text-transform: uppercase;
+            color: var(--electric-blue);
+            word-wrap: break-word; /* Evita quebra em telas muito pequenas */
         }
 
         /* --- GRID SYSTEM --- */
         .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;
         }
-
-        @media (max-width: 900px) { 
-            .main-grid { grid-template-columns: 1fr; } 
-        }
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
 
         .panel {
-            border: 1px solid var(--border-dim);
-            background: var(--panel-bg);
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.05);
+            border: 1px solid var(--border-dim); background: var(--panel-bg);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.05); transition: border-color 0.3s;
             width: 100%;
         }
+        .panel:hover { border-color: var(--matrix-green); }
 
+        /* Header Azul */
         .panel-header {
-            background: rgba(0, 50, 0, 0.9);
-            color: var(--matrix-green);
-            font-weight: bold;
-            padding: 12px;
-            text-transform: uppercase;
-            font-size: 1.1em;
-            border-bottom: 1px solid var(--border-dim);
+            background: rgba(0, 0, 80, 0.9); /* Fundo azul profundo */
+            color: var(--electric-blue);
+            font-weight: bold; padding: 12px; text-transform: uppercase;
+            font-size: 1.1em; border-bottom: 1px solid var(--border-dim);
             letter-spacing: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-shadow: 0 0 5px var(--electric-blue);
         }
 
-        /* --- TABELA E INPUTS --- */
+        /* --- TABELA --- */
         .calc-row {
-            display: grid;
-            grid-template-columns: 1.4fr 2fr;
-            border-bottom: 1px solid var(--border-dim);
-            align-items: stretch;
+            display: grid; grid-template-columns: 1.4fr 2fr;
+            border-bottom: 1px solid var(--border-dim); align-items: stretch;
             width: 100%;
         }
         .calc-row:last-child { border-bottom: none; }
         
         .calc-label {
-            padding: 10px;
-            border-right: 1px solid var(--border-dim);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            background: rgba(0, 20, 0, 0.3);
-            font-size: 0.85em;
+            padding: 12px; border-right: 1px solid var(--border-dim);
+            font-weight: bold; display: flex; align-items: center;
+            background: rgba(0, 20, 0, 0.3); font-size: 0.9em; color: var(--matrix-green);
             word-break: break-word;
         }
 
         .calc-input-area {
-            padding: 8px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-width: 0;
+            padding: 8px; position: relative; display: flex; flex-direction: column;
+            justify-content: center; min-width: 0; /* Evita overflow */
         }
 
         .desc {
-            font-size: 0.65em;
-            color: #008800;
-            margin-top: 4px;
-            text-transform: uppercase;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.7em; color: #008800; margin-top: 4px; text-transform: uppercase;
         }
 
-        /* Input text/number padrão */
+        /* Inputs Verdes */
         input {
-            width: 100%;
-            min-width: 0;
-            background: #000;
-            border: 1px solid #004400;
-            color: var(--matrix-green);
-            padding: 8px 5px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            font-weight: bold;
-            outline: none;
-            text-transform: uppercase;
+            width: 100%; background: #000; border: 1px solid #004400;
+            color: var(--matrix-green); padding: 8px 10px;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px;
+            font-weight: bold; outline: none; transition: 0.3s; text-transform: uppercase;
+            min-width: 0; /* Importante para flex/grid */
         }
-        input:focus {
-            border-color: var(--matrix-green);
-            box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
-            background: #001100;
+        input:focus { border-color: var(--matrix-green); box-shadow: 0 0 8px rgba(0, 255, 65, 0.3); background: #001100; }
+
+        /* Resultados Azuis Saturados */
+        input.result-field {
+            color: var(--electric-blue) !important; border-color: var(--electric-blue) !important;
+            background: rgba(0, 0, 50, 0.6) !important; pointer-events: none;
+            text-shadow: 0 0 5px var(--electric-blue);
         }
 
-        /* --- CUSTOM SELECT (Substituto do Nativo) --- */
-        /* Esconde o select original */
-        select {
-            display: none !important; 
-        }
-
-        /* Container do Select Customizado */
-        .custom-select-wrapper {
-            position: relative;
-            user-select: none;
-            width: 100%;
-        }
-
-        /* A caixa fechada (Trigger) */
+        /* --- CUSTOM SELECT --- */
+        select { display: none !important; }
+        .custom-select-wrapper { position: relative; user-select: none; width: 100%; }
         .custom-select-trigger {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            background: #000;
-            border: 1px solid #004400;
-            color: var(--matrix-green);
-            padding: 8px 10px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.3s;
+            position: relative; display: flex; align-items: center; justify-content: space-between;
+            width: 100%; background: #000; border: 1px solid #004400;
+            color: var(--matrix-green); padding: 8px 10px;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px;
+            font-weight: bold; cursor: pointer; text-transform: uppercase;
         }
-
-        .custom-select-trigger:after {
-            content: "▼";
-            font-size: 10px;
-            margin-left: 10px;
-            transition: transform 0.3s;
-        }
+        .custom-select-trigger:after { content: "▼"; font-size: 10px; margin-left: 10px; }
         
-        .custom-select.open .custom-select-trigger {
-            border-color: var(--matrix-green);
-            background: #001100;
-        }
-        
-        .custom-select.open .custom-select-trigger:after {
-            transform: rotate(180deg);
-        }
-
-        /* Lista de Opções (Dropdown) */
+        /* Lista */
         .custom-options {
-            position: absolute;
-            display: block;
-            top: 100%; left: 0; right: 0;
-            background: #000;
-            border: 1px solid var(--matrix-green);
-            border-top: none;
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            max-height: 250px; /* Scroll se for muito grande */
-            overflow-y: auto;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.9);
+            position: absolute; display: block; top: 100%; left: 0; right: 0;
+            background: #000; border: 1px solid var(--matrix-green); border-top: none;
+            z-index: 999; opacity: 0; visibility: hidden; pointer-events: none;
+            transform: translateY(-10px); transition: all 0.3s ease;
+            max-height: 300px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.9);
+        }
+        
+        /* Desktop List Maior */
+        @media (min-width: 1024px) {
+            .custom-options { max-height: 800px !important; }
         }
 
-        .custom-select.open .custom-options {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: all;
-            transform: translateY(0);
-        }
-
+        .custom-select.open .custom-options { opacity: 1; visibility: visible; pointer-events: all; transform: translateY(0); }
         .custom-option {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #002200;
-            color: #00aa22;
-            background: #000500;
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
+            padding: 10px; cursor: pointer; border-bottom: 1px solid #002200;
+            color: #00aa22; background: #000500; font-weight: bold; text-transform: uppercase;
         }
-
-        .custom-option:hover {
-            color: #000;
-            background: var(--matrix-green);
-        }
-
-        .custom-option.selected {
-            color: var(--matrix-green);
-            background: #001100;
-            border-left: 3px solid var(--matrix-green);
-        }
-
-        /* Scrollbar hacker para o menu */
+        .custom-option:hover { color: #000; background: var(--matrix-green); }
+        .custom-option.selected { color: var(--matrix-green); background: #001100; border-left: 3px solid var(--matrix-green); }
         .custom-options::-webkit-scrollbar { width: 5px; }
         .custom-options::-webkit-scrollbar-track { background: #000; }
         .custom-options::-webkit-scrollbar-thumb { background: #004400; }
 
         /* --------------------------- */
-
-        .input-group-append {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-        .input-group-append input { 
-            border-right: none; 
-            flex: 1; 
-        }
+        .input-group-append { display: flex; align-items: center; width: 100%; }
+        .input-group-append input { border-right: none; flex: 1; }
         .unit-tag {
-            background: #002200;
-            border: 1px solid #004400;
-            border-left: none;
-            color: var(--matrix-green);
-            padding: 0 8px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 34px; 
-            flex-shrink: 0;
+            background: #002200; border: 1px solid #004400; border-left: none;
+            color: var(--matrix-green); padding: 8px 12px; font-size: 11px;
+            height: 100%; display: flex; align-items: center; justify-content: center; min-width: 50px;
         }
-
-        .readonly-input {
-            background: rgba(0, 255, 65, 0.05) !important;
-            border-color: #003300 !important;
-            color: #88ff88 !important;
+        .unit-tag.blue {
+            color: var(--electric-blue); border-color: var(--electric-blue);
+            background: rgba(0,0,80,0.6);
+            text-shadow: 0 0 5px var(--electric-blue);
         }
 
         .results-divider {
-            background: var(--border-dim);
-            color: #000;
-            font-weight: bold;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            text-align: right;
-            border-top: 1px solid var(--matrix-green);
+            background: var(--border-dim); color: var(--electric-blue);
+            font-weight: bold; padding: 5px 10px; font-size: 0.8em;
+            text-align: right; border-top: 1px solid var(--matrix-green);
         }
 
         .vials-box {
-            margin-top: 20px;
-            border: 1px solid var(--matrix-green);
-            background: #000;
-            display: grid;
-            grid-template-columns: 110px 1fr;
-            box-shadow: var(--text-glow);
-            width: 100%;
-            overflow: hidden;
+            margin-top: 20px; border: 1px solid var(--electric-blue);
+            background: #000; display: grid; grid-template-columns: 150px 1fr;
+            box-shadow: var(--blue-glow); width: 100%;
         }
         .vials-label {
-            background: var(--matrix-green);
-            color: #000;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 5px;
-            text-transform: uppercase;
-            font-size: 0.8em;
-            text-align: center;
+            background: var(--electric-blue); color: #000;
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            padding: 15px; text-transform: uppercase;
         }
 
+        /* --- GRÁFICOS (FIX MOBILE SCROLL) --- */
         .charts-wrapper {
             margin-top: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+            width: 100%; /* Garante largura controlada */
         }
         @media (max-width: 800px) { .charts-wrapper { grid-template-columns: 1fr; } }
 
         .chart-card {
-            background: #000;
-            border: 1px solid var(--border-dim);
-            padding: 10px;
-            position: relative;
-            width: 100%;
-            min-width: 0;
-            overflow: hidden;
+            background: #000; border: 1px solid var(--border-dim);
+            padding: 15px; position: relative;
+            width: 100%; min-width: 0; /* Impede overflow flex */
+            overflow: hidden; /* Corta qualquer excesso do canvas */
         }
         .chart-card h3 {
-            text-align: center;
-            margin: 0 0 10px 0;
-            color: var(--matrix-green);
-            text-transform: uppercase;
-            font-size: 0.9em;
-            border-bottom: 1px dashed var(--border-dim);
-            padding-bottom: 8px;
+            text-align: center; margin: 0 0 15px 0; color: var(--electric-blue);
+            text-transform: uppercase; font-size: 1.1em;
+            border-bottom: 1px dashed var(--border-dim); padding-bottom: 10px;
+            text-shadow: var(--blue-glow);
         }
+        
+        /* Container responsivo para o canvas */
         .chart-container-inner {
             position: relative;
+            height: 300px;
             width: 100%;
-            height: 250px;
+            overflow: hidden;
         }
 
+        /* --- LOADER --- */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .hidden { display: none !important; }
         .progress-frame {
-            width: 70%; max-width: 300px; padding: 4px; 
-            border: 1px solid var(--matrix-green);
-            box-shadow: 0 0 10px var(--matrix-green);
-            margin-top: 10px;
+            width: 300px; max-width: 80%; padding: 4px; border: 1px solid var(--matrix-green);
+            box-shadow: 0 0 10px var(--matrix-green); margin-top: 10px;
         }
         .progress-bar { height: 20px; background: var(--matrix-green); width: 0%; }
-
+        
         #lang-btn {
-            position: fixed; bottom: 10px; right: 10px;
-            color: #004400; border: 1px solid #004400;
-            padding: 4px 6px; font-size: 9px; cursor: pointer;
-            transition: 0.3s; z-index: 100;
-            background: #000;
+            position: fixed; bottom: 15px; right: 15px; color: #004400;
+            border: 1px solid #004400; padding: 5px 8px; font-size: 10px;
+            cursor: pointer; transition: 0.3s; z-index: 100; background: #000;
         }
         #lang-btn:hover { color: var(--matrix-green); border-color: var(--matrix-green); }
 
@@ -399,7 +256,7 @@
     <div id="lang-btn" onclick="toggleLang()">[ EN / PT ]</div>
 
     <div class="container">
-        <h1>CALCULATOR</h1>
+        <h1 data-lang="app_title">CALCULATOR</h1>
 
         <div class="main-grid">
             <div class="panel">
@@ -409,19 +266,43 @@
                     <div class="calc-label" data-lang="l_comp">Select Compound</div>
                     <div class="calc-input-area">
                         <select id="compound">
-                            <option value="" disabled selected>Open this select menu</option>
-                            <option value="0.935">Masterone Propionate</option>
-                            <option value="0.96">Nandrolone Decanoate</option>
-                            <option value="0.8">Testosterone Base</option>
-                            <option value="0.92">Testosterone Cypionate</option>
-                            <option value="0.94">Testosterone Decanoate</option>
-                            <option value="0.935">Testosterone Enanthate</option>
-                            <option value="0.91">Testosterone Isocaproate</option>
-                            <option value="0.88">Testosterone Phenylpropionate</option>
-                            <option value="0.89">Testosterone Propionate</option>
-                            <option value="0.85">Trenbolone Acetate</option>
-                            <option value="0.9">Trenbolone Enanthate</option>
-                            <option value="0.75">UNKNOWN</option>
+                            <option value="" disabled selected data-lang="opt_default">Open this select menu</option>
+                            <option value="0.893" data-lang="c_test_base">Testosterone Base</option>
+                            <option value="0.86" data-lang="c_test_ace">Testosterone Acetate</option>
+                            <option value="0.833" data-lang="c_test_prop">Testosterone Propionate</option>
+                            <option value="0.8" data-lang="c_test_pp">Testosterone Phenylpropionate</option>
+                            <option value="0.778" data-lang="c_test_iso">Testosterone Isocaproate</option>
+                            <option value="0.757" data-lang="c_test_cyp">Testosterone Cypionate</option>
+                            <option value="0.74" data-lang="c_test_enan">Testosterone Enanthate</option>
+                            <option value="0.722" data-lang="c_test_dec">Testosterone Decanoate</option>
+                            <option value="0.704" data-lang="c_test_und">Testosterone Undecanoate</option>
+                            <option value="0.833" data-lang="c_methyl">Methyltestosterone</option>
+                            <option value="0.935" data-lang="c_mast_prop">Masterone Propionate</option>
+                            <option value="0.909" data-lang="c_nand_base">Nandrolone Base</option>
+                            <option value="0.818" data-lang="c_nand_pp">Nandrolone Phenylpropionate</option>
+                            <option value="0.741" data-lang="c_nand_dec">Nandrolone Decanoate</option>
+                            <option value="0.909" data-lang="c_tren_base">Trenbolone Base</option>
+                            <option value="0.824" data-lang="c_tren_ace">Trenbolone Acetate</option>
+                            <option value="0.75" data-lang="c_tren_enan">Trenbolone Enanthate</option>
+                            <option value="0.733" data-lang="c_tren_hex">Trenbolone Hexahydrobenzylcarbonate</option>
+                            <option value="0.909" data-lang="c_bold_base">Boldenone Base</option>
+                            <option value="0.824" data-lang="c_bold_ace">Boldenone Acetate</option>
+                            <option value="0.8" data-lang="c_bold_prop">Boldenone Propionate</option>
+                            <option value="0.774" data-lang="c_bold_cyp">Boldenone Cypionate</option>
+                            <option value="0.722" data-lang="c_bold_und">Boldenone Undecylenate</option>
+                            <option value="0.909" data-lang="c_drost_base">Drostanolone Base</option>
+                            <option value="0.833" data-lang="c_drost_prop">Drostanolone Propionate</option>
+                            <option value="0.769" data-lang="c_drost_enan">Drostanolone Enanthate</option>
+                            <option value="0.829" data-lang="c_meth_ace">Methenolone Acetate</option>
+                            <option value="0.757" data-lang="c_meth_enan">Methenolone Enanthate</option>
+                            <option value="0.833" data-lang="c_oxan">Oxandrolone</option>
+                            <option value="0.828" data-lang="c_oxy">Oxymetholone</option>
+                            <option value="0.833" data-lang="c_stano">Stanozolol</option>
+                            <option value="0.833" data-lang="c_dbol">Methandrostenolone</option>
+                            <option value="0.833" data-lang="c_tbol">Turinabol</option>
+                            <option value="0.833" data-lang="c_halo">Halotestin</option>
+                            <option value="0.833" data-lang="c_provi">Proviron</option>
+                            <option value="0.75" data-lang="c_unknown">UNKNOWN</option>
                         </select>
                     </div>
                 </div>
@@ -433,7 +314,7 @@
                             <input type="number" id="volume" value="2000">
                             <div class="unit-tag">ml</div>
                         </div>
-                        <span class="desc">Batch Size (100ml = 100)</span>
+                        <span class="desc" data-lang="d_batch">Batch Size (100ml = 100)</span>
                     </div>
                 </div>
 
@@ -444,7 +325,7 @@
                             <input type="number" id="dosage" value="300">
                             <div class="unit-tag">mg/ml</div>
                         </div>
-                        <span class="desc">Concentration</span>
+                        <span class="desc" data-lang="d_conc">Concentration</span>
                     </div>
                 </div>
 
@@ -452,12 +333,12 @@
                     <div class="calc-label" data-lang="l_disp">Displacement Factor</div>
                     <div class="calc-input-area">
                         <input type="number" id="displacement" value="" placeholder="0.000" step="0.001">
-                        <span class="desc">ml per gram</span>
+                        <span class="desc" data-lang="d_disp_unit">ml per gram</span>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">BA Concentration</div>
+                    <div class="calc-label" data-lang="l_ba">BA Concentration</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
                             <input type="number" id="ba_conc" value="1">
@@ -468,7 +349,7 @@
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">BB Concentration</div>
+                    <div class="calc-label" data-lang="l_bb">BB Concentration</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
                             <input type="number" id="bb_conc" value="15">
@@ -478,34 +359,34 @@
                     </div>
                 </div>
 
-                <div class="results-divider">RESULTS (STANDARD)</div>
+                <div class="results-divider" data-lang="h_res_std">RESULTS (STANDARD)</div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Oil</div>
+                    <div class="calc-label" data-lang="l_res_oil">Oil</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_oil" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="res_oil" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Compound</div>
+                    <div class="calc-label" data-lang="l_res_comp">Compound</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_comp_g" readonly class="readonly-input">
-                            <div class="unit-tag">grams</div>
+                            <input type="text" id="res_comp_g" readonly class="result-field">
+                            <div class="unit-tag blue" data-lang="u_grams">grams</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Compound VOL</div>
+                    <div class="calc-label" data-lang="l_res_vol">Compound VOL</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_comp_vol" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="res_comp_vol" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -514,8 +395,8 @@
                     <div class="calc-label">BA</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_ba" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="res_ba" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -524,18 +405,18 @@
                     <div class="calc-label">BB</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_bb" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="res_bb" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label" style="color: #fff;">Final Volume</div>
+                    <div class="calc-label" style="color: var(--electric-blue);" data-lang="l_final_vol">Final Volume</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="res_total" readonly class="readonly-input" style="color: #fff !important; border-color: #fff !important;">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="res_total" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -545,34 +426,34 @@
                 <div class="panel-header" data-lang="h_adj">Adjusted For Overdose</div>
 
                 <div class="calc-row">
-                    <div class="calc-label" data-lang="l_pure">Compound Purity</div>
+                    <div class="calc-label" data-lang="l_purity">Compound Purity</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
                             <input type="number" id="purity" value="97.80">
                             <div class="unit-tag">%</div>
                         </div>
-                        <span class="desc">Raw Purity (100ml = 100)</span>
+                        <span class="desc" data-lang="d_purity">Raw Purity (100ml = 100)</span>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label" data-lang="l_adj">Adjust for 100%</div>
+                    <div class="calc-label" data-lang="l_adj_100">Adjust for 100%</div>
                     <div class="calc-input-area">
                         <select id="sel_purity">
-                            <option value="" disabled selected>Open this select menu</option>
-                            <option value="no">No</option>
-                            <option value="yes">Yes (Bring to 100%)</option>
+                            <option value="" disabled selected data-lang="opt_default">Open this select menu</option>
+                            <option value="no" data-lang="opt_no">No</option>
+                            <option value="yes" data-lang="opt_yes_100">Yes (Bring to 100%)</option>
                         </select>
-                        <span class="desc">Correct raw impurity</span>
+                        <span class="desc" data-lang="d_raw">Correct raw impurity</span>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Total Compound Weight</div>
+                    <div class="calc-label" data-lang="l_total_weight">Total Compound Weight</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_weight_1" readonly class="readonly-input">
-                            <div class="unit-tag">grams</div>
+                            <input type="text" id="adj_weight_1" readonly class="result-field">
+                            <div class="unit-tag blue" data-lang="u_grams">grams</div>
                         </div>
                     </div>
                 </div>
@@ -581,52 +462,52 @@
                     <div class="calc-label" data-lang="l_cheeky">Add a cheeky bit?</div>
                     <div class="calc-input-area">
                         <select id="sel_cheeky">
-                            <option value="" disabled selected>Open this select menu</option>
-                            <option value="no">No</option>
-                            <option value="yes">Yes (+5% measure)</option>
+                            <option value="" disabled selected data-lang="opt_default">Open this select menu</option>
+                            <option value="no" data-lang="opt_no">No</option>
+                            <option value="yes" data-lang="opt_yes_5">Yes (+5% measure)</option>
                         </select>
-                        <span class="desc">+5% for good measure</span>
+                        <span class="desc" data-lang="d_cheeky">+5% for good measure</span>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Total Compound Weight</div>
+                    <div class="calc-label" data-lang="l_total_weight">Total Compound Weight</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_weight_final" readonly class="readonly-input" style="border-color: #fff !important; color: #fff !important;">
-                            <div class="unit-tag">grams</div>
+                            <input type="text" id="adj_weight_final" readonly class="result-field">
+                            <div class="unit-tag blue" data-lang="u_grams">grams</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="results-divider">RESULTS (ADJUSTED)</div>
+                <div class="results-divider" data-lang="h_res_adj">RESULTS (ADJUSTED)</div>
 
                 <div class="calc-row">
-                    <div class="calc-label">OIL</div>
+                    <div class="calc-label" data-lang="l_res_oil">OIL</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_res_oil" readonly class="readonly-input" style="background: #002200 !important; color: #fff !important; font-weight: bold;">
-                            <div class="unit-tag">ml</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="calc-row">
-                    <div class="calc-label">Compound</div>
-                    <div class="calc-input-area">
-                        <div class="input-group-append">
-                            <input type="text" id="adj_res_comp" readonly class="readonly-input">
-                            <div class="unit-tag">grams</div>
+                            <input type="text" id="adj_res_oil" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">Compound VOL</div>
+                    <div class="calc-label" data-lang="l_res_comp">Compound</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_res_comp_vol" readonly class="readonly-input" style="background: #002200 !important; color: #fff !important; font-weight: bold;">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="adj_res_comp" readonly class="result-field">
+                            <div class="unit-tag blue" data-lang="u_grams">grams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_res_vol">Compound VOL</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_comp_vol" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -635,8 +516,8 @@
                     <div class="calc-label">BA</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_res_ba" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="adj_res_ba" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -645,18 +526,18 @@
                     <div class="calc-label">BB</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_res_bb" readonly class="readonly-input">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="adj_res_bb" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label" style="color: #fff;">Final Adjusted Volume</div>
+                    <div class="calc-label" style="color: var(--electric-blue);" data-lang="l_final_adj">Final Adjusted Volume</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
-                            <input type="text" id="adj_res_total" readonly class="readonly-input" style="color: #fff !important; border-color: #fff !important;">
-                            <div class="unit-tag">ml</div>
+                            <input type="text" id="adj_res_total" readonly class="result-field">
+                            <div class="unit-tag blue">ml</div>
                         </div>
                     </div>
                 </div>
@@ -665,9 +546,9 @@
 
         <div class="vials-box">
             <div class="vials-label" data-lang="l_vials">No of Vials</div>
-            <div style="display: flex; align-items: center; padding: 0 10px; flex:1; min-width: 0;">
-                <input type="text" id="vials_total" readonly style="border:none; font-size: 1.3em; background: transparent; box-shadow: none; width: 50px;">
-                <span style="color: #008800; font-size: 0.8em; white-space: nowrap; overflow:hidden; text-overflow:ellipsis;">(10.5 ml per vial)</span>
+            <div style="display: flex; align-items: center; padding: 0 15px;">
+                <input type="text" id="vials_total" readonly style="border:none; font-size: 1.5em; background: transparent; box-shadow: none; color: var(--electric-blue); text-shadow: var(--blue-glow);">
+                <span style="color: #666; font-size: 0.9em; white-space: nowrap;" data-lang="d_vials_size">(10.5 ml per vial)</span>
             </div>
         </div>
 
@@ -689,7 +570,43 @@
     </div>
 
     <script>
-        // --- BOOT ANIMATION ---
+        const texts = {
+            en: {
+                app_title: "CALCULATOR",
+                h_std: "Steroid Homebrew Calculator", h_adj: "Adjusted For Overdose", h_res_std: "RESULTS (STANDARD)", h_res_adj: "RESULTS (ADJUSTED)",
+                l_comp: "Select Compound", l_oil: "Oil in ml's", l_dose: "Dosage in mg", l_disp: "Displacement Factor", l_ba: "BA Concentration", l_bb: "BB Concentration",
+                l_res_oil: "Oil", l_res_comp: "Compound", l_res_vol: "Compound VOL", l_final_vol: "Final Volume",
+                l_purity: "Compound Purity", l_adj_100: "Adjust for 100%", l_total_weight: "Total Compound Weight", l_cheeky: "Add a cheeky bit?", l_final_adj: "Final Adjusted Volume",
+                l_vials: "No of Vials",
+                d_batch: "Batch Size (100ml = 100)", d_conc: "Concentration", d_disp_unit: "ml per gram", d_purity: "Raw Purity (100ml = 100)", d_raw: "Correct raw impurity", d_cheeky: "+5% for good measure", d_vials_size: "(10.5 ml per vial)",
+                u_grams: "grams",
+                opt_default: "Open this select menu", opt_no: "No", opt_yes_100: "Yes (Bring to 100%)", opt_yes_5: "Yes (+5% measure)",
+                c_norm: "Composition (Normal)", c_adj: "Composition (Adjusted)",
+                c_test_base: "Testosterone Base", c_test_ace: "Testosterone Acetate", c_test_prop: "Testosterone Propionate", c_test_pp: "Testosterone Phenylpropionate", c_test_iso: "Testosterone Isocaproate", c_test_cyp: "Testosterone Cypionate", c_test_enan: "Testosterone Enanthate", c_test_dec: "Testosterone Decanoate", c_test_und: "Testosterone Undecanoate",
+                c_methyl: "Methyltestosterone", c_mast_prop: "Masterone Propionate", c_nand_base: "Nandrolone Base", c_nand_pp: "Nandrolone Phenylpropionate", c_nand_dec: "Nandrolone Decanoate", c_tren_base: "Trenbolone Base", c_tren_ace: "Trenbolone Acetate", c_tren_enan: "Trenbolone Enanthate", c_tren_hex: "Trenbolone Hexahydrobenzylcarbonate",
+                c_bold_base: "Boldenone Base", c_bold_ace: "Boldenone Acetate", c_bold_prop: "Boldenone Propionate", c_bold_cyp: "Boldenone Cypionate", c_bold_und: "Boldenone Undecylenate", c_drost_base: "Drostanolone Base", c_drost_prop: "Drostanolone Propionate", c_drost_enan: "Drostanolone Enanthate", c_meth_ace: "Methenolone Acetate", c_meth_enan: "Methenolone Enanthate",
+                c_oxan: "Oxandrolone", c_oxy: "Oxymetholone", c_stano: "Stanozolol", c_dbol: "Methandrostenolone", c_tbol: "Turinabol", c_halo: "Halotestin", c_provi: "Proviron", c_unknown: "UNKNOWN"
+            },
+            pt: {
+                app_title: "CALCULADORA",
+                h_std: "Calculadora Padrão", h_adj: "Ajuste de Sobredose", h_res_std: "RESULTADOS (PADRÃO)", h_res_adj: "RESULTADOS (AJUSTADO)",
+                l_comp: "Selecione o Composto", l_oil: "Óleo em ml", l_dose: "Dosagem em mg", l_disp: "Fator Deslocamento", l_ba: "Concentração BA", l_bb: "Concentração BB",
+                l_res_oil: "Óleo", l_res_comp: "Composto", l_res_vol: "Vol. Composto", l_final_vol: "Volume Final",
+                l_purity: "Pureza do Composto", l_adj_100: "Ajustar p/ 100%", l_total_weight: "Peso Total Composto", l_cheeky: "Adicionar extra?", l_final_adj: "Volume Final Ajustado",
+                l_vials: "Qtd. Frascos",
+                d_batch: "Tamanho Lote (100ml = 100)", d_conc: "Concentração", d_disp_unit: "ml por grama", d_purity: "Pureza da Matéria Prima", d_raw: "Corrigir impureza", d_cheeky: "+5% por segurança", d_vials_size: "(10.5 ml por frasco)",
+                u_grams: "gramas",
+                opt_default: "Abra este menu", opt_no: "Não", opt_yes_100: "Sim (Levar a 100%)", opt_yes_5: "Sim (+5% medida)",
+                c_norm: "Composição (Normal)", c_adj: "Composição (Ajustada)",
+                c_test_base: "Testosterona Base", c_test_ace: "Testosterona Acetato", c_test_prop: "Testosterona Propionato", c_test_pp: "Testosterona Fenilpropionato", c_test_iso: "Testosterona Isocaproato", c_test_cyp: "Testosterona Cipionato", c_test_enan: "Testosterona Enantato", c_test_dec: "Testosterona Decanoato", c_test_und: "Testosterona Undecanoato",
+                c_methyl: "Metiltestosterona", c_mast_prop: "Masteron Propionato", c_nand_base: "Nandrolona Base", c_nand_pp: "Nandrolona Fenilpropionato", c_nand_dec: "Nandrolona Decanoato", c_tren_base: "Trembolona Base", c_tren_ace: "Trembolona Acetato", c_tren_enan: "Trembolona Enantato", c_tren_hex: "Trembolona Hexahydrobenzylcarbonate",
+                c_bold_base: "Boldenona Base", c_bold_ace: "Boldenona Acetato", c_bold_prop: "Boldenona Propionato", c_bold_cyp: "Boldenona Cipionato", c_bold_und: "Boldenona Undecilenato", c_drost_base: "Drostanolona Base", c_drost_prop: "Drostanolona Propionato", c_drost_enan: "Drostanolona Enantato", c_meth_ace: "Metenolona Acetato", c_meth_enan: "Metenolona Enantato",
+                c_oxan: "Oxandrolona", c_oxy: "Oximetolona", c_stano: "Estanozolol", c_dbol: "Metandrostenolona", c_tbol: "Turinabol", c_halo: "Halotestin", c_provi: "Proviron", c_unknown: "DESCONHECIDO"
+            }
+        };
+
+        let currentLang = 'en';
+
         window.onload = function() {
             const bar = document.getElementById('loader-bar');
             const txt = document.getElementById('boot-text');
@@ -706,146 +623,128 @@
                     clearInterval(interval);
                     txt.innerText = "SYSTEM READY";
                     setTimeout(() => { screen.style.opacity = '0'; setTimeout(() => screen.classList.add('hidden'), 500); }, 300);
-                    
-                    // Inicializa tudo
                     initCharts();
-                    setupCustomSelects(); // ATIVA OS MENUS CUSTOMIZADOS
+                    setupCustomSelects();
                     calc();
                 }
             }, 30);
         };
 
-        // --- CUSTOM SELECT LOGIC (HACKER THEME ON MOBILE) ---
+        function toggleLang() {
+            currentLang = currentLang === 'en' ? 'pt' : 'en';
+            const elements = document.querySelectorAll('[data-lang]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if(texts[currentLang][key]) {
+                    if (el.tagName === 'OPTION') {
+                        el.textContent = texts[currentLang][key];
+                    } else {
+                        el.innerText = texts[currentLang][key];
+                    }
+                }
+            });
+            updateCustomSelectTexts();
+        }
+
+        function updateCustomSelectTexts() {
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                const wrapper = select.parentElement.querySelector('.custom-select-wrapper');
+                if(!wrapper) return;
+                const trigger = wrapper.querySelector('.custom-select-trigger');
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.textContent = selectedOption.textContent;
+                const customOptions = wrapper.querySelectorAll('.custom-option');
+                Array.from(select.options).forEach((opt, index) => {
+                    if(customOptions[index]) {
+                        customOptions[index].textContent = opt.textContent;
+                    }
+                });
+            });
+        }
+
         function setupCustomSelects() {
             const selects = document.querySelectorAll('select');
-            
             selects.forEach(select => {
-                // Cria o wrapper
                 const wrapper = document.createElement('div');
                 wrapper.className = 'custom-select-wrapper';
                 select.parentNode.insertBefore(wrapper, select);
-                wrapper.appendChild(select); // Move o select para dentro
-
-                // Cria o Trigger (Caixa Visível)
+                wrapper.appendChild(select);
                 const trigger = document.createElement('div');
                 trigger.className = 'custom-select-trigger';
-                
-                // Texto inicial
                 const selectedOption = select.options[select.selectedIndex];
                 trigger.textContent = selectedOption ? selectedOption.textContent : 'SELECT';
-                
-                // Cria a lista de opções (Dropdown)
                 const optionsDiv = document.createElement('div');
                 optionsDiv.className = 'custom-options';
-
-                // Popula a lista com base no select original
                 Array.from(select.options).forEach(opt => {
                     const customOpt = document.createElement('div');
                     customOpt.className = 'custom-option';
                     customOpt.textContent = opt.textContent;
                     customOpt.dataset.value = opt.value;
-                    
-                    if (opt.disabled) {
-                        customOpt.style.opacity = '0.5';
-                        customOpt.style.pointerEvents = 'none';
-                    }
-
+                    if (opt.disabled) { customOpt.style.opacity = '0.5'; customOpt.style.pointerEvents = 'none'; }
                     if (opt.selected) customOpt.classList.add('selected');
-
-                    // Ação de clique na opção
                     customOpt.addEventListener('click', function(e) {
-                        e.stopPropagation(); // Impede fechar ao clicar
-                        select.value = this.dataset.value; // Atualiza select original
-                        trigger.textContent = this.textContent; // Atualiza texto
-                        
-                        // Atualiza classe 'selected' visual
+                        e.stopPropagation();
+                        select.value = this.dataset.value;
+                        trigger.textContent = this.textContent;
                         optionsDiv.querySelectorAll('.custom-option').forEach(el => el.classList.remove('selected'));
                         this.classList.add('selected');
-
-                        // Fecha o menu
                         wrapper.querySelector('.custom-select').classList.remove('open');
-                        
-                        // Força o evento 'change' para o sistema calcular
                         select.dispatchEvent(new Event('change'));
                     });
-
                     optionsDiv.appendChild(customOpt);
                 });
-
-                // Estrutura final do custom select
                 const customSelect = document.createElement('div');
                 customSelect.className = 'custom-select';
                 customSelect.appendChild(trigger);
                 customSelect.appendChild(optionsDiv);
                 wrapper.appendChild(customSelect);
-
-                // Abrir/Fechar ao clicar no trigger
                 trigger.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    // Fecha outros abertos
-                    document.querySelectorAll('.custom-select').forEach(el => {
-                        if(el !== customSelect) el.classList.remove('open');
-                    });
+                    document.querySelectorAll('.custom-select').forEach(el => { if(el !== customSelect) el.classList.remove('open'); });
                     customSelect.classList.toggle('open');
                 });
             });
-
-            // Fecha ao clicar fora
-            document.addEventListener('click', function() {
-                document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
-            });
+            document.addEventListener('click', function() { document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open')); });
         }
 
-        // --- CHARTS CONFIG ---
         let chartNormal = null;
         let chartAdjusted = null;
 
         function initCharts() {
-            Chart.defaults.color = '#00ff41';
+            Chart.defaults.color = '#0033ff'; /* Azul Saturado */
             Chart.defaults.font.family = "'Courier New', monospace";
 
             const ctx1 = document.getElementById('chartNormal').getContext('2d');
             const ctx2 = document.getElementById('chartAdjusted').getContext('2d');
 
             const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false, 
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { boxWidth: 10, padding: 8, font: { size: 9 } }
-                    }
-                },
-                elements: { arc: { borderWidth: 1, borderColor: '#000' } },
-                cutout: '50%'
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 9 } } } },
+                elements: { arc: { borderWidth: 1, borderColor: '#000' } }, cutout: '50%'
             };
 
-            const colors = { oil: '#002200', powder: '#00ff41', ba: '#008800', bb: '#005500' };
+            const colors = {
+                oil: '#0033ff',      /* Azul Saturado */
+                powder: '#00ff41',   
+                ba: '#004400',       
+                bb: '#002200'        
+            };
 
             chartNormal = new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
                     labels: ['Oil', 'Compound VOL', 'BA', 'BB'],
-                    datasets: [{
-                        data: [0, 0, 0, 0],
-                        backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb],
-                        hoverOffset: 4
-                    }]
-                },
-                options: commonOptions
+                    datasets: [{ data: [0, 0, 0, 0], backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb], hoverOffset: 4 }]
+                }, options: commonOptions
             });
 
             chartAdjusted = new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
                     labels: ['Oil', 'Compound VOL', 'BA', 'BB'],
-                    datasets: [{
-                        data: [0, 0, 0, 0],
-                        backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb],
-                        hoverOffset: 4
-                    }]
-                },
-                options: commonOptions
+                    datasets: [{ data: [0, 0, 0, 0], backgroundColor: [colors.oil, colors.powder, colors.ba, colors.bb], hoverOffset: 4 }]
+                }, options: commonOptions
             });
         }
 
@@ -857,22 +756,14 @@
             chartAdjusted.update();
         }
 
-        // --- CALCULATION LOGIC ---
         const inputs = ['compound', 'volume', 'dosage', 'displacement', 'ba_conc', 'bb_conc', 'purity', 'sel_purity', 'sel_cheeky'];
         inputs.forEach(id => {
             const el = document.getElementById(id);
-            if(el) {
-                el.addEventListener('input', calc);
-                el.addEventListener('change', calc);
-            }
+            if(el) { el.addEventListener('input', calc); el.addEventListener('change', calc); }
         });
 
-        // Handler especial para atualizar o displacement quando o select muda
         document.getElementById('compound').addEventListener('change', function() {
-            if(this.value) {
-                document.getElementById('displacement').value = this.value;
-                calc();
-            }
+            if(this.value) { document.getElementById('displacement').value = this.value; calc(); }
         });
 
         function calc() {
@@ -884,7 +775,6 @@
 
             if (disp === 0) return;
 
-            // Standard
             let powder_g = (vol * dose) / 1000;
             let powder_vol = powder_g * disp;
             let ba_vol = vol * (ba_p / 100);
@@ -892,14 +782,9 @@
             let oil = vol - (powder_vol + ba_vol + bb_vol);
             if(oil < 0) oil = 0;
 
-            setVal('res_oil', oil);
-            setVal('res_comp_g', powder_g);
-            setVal('res_comp_vol', powder_vol);
-            setVal('res_ba', ba_vol);
-            setVal('res_bb', bb_vol);
-            setVal('res_total', vol);
+            setVal('res_oil', oil); setVal('res_comp_g', powder_g); setVal('res_comp_vol', powder_vol);
+            setVal('res_ba', ba_vol); setVal('res_bb', bb_vol); setVal('res_total', vol);
 
-            // Adjusted
             let purity = parseFloat(document.getElementById('purity').value) || 100;
             let do_adj = document.getElementById('sel_purity').value === 'yes';
             let do_cheeky = document.getElementById('sel_cheeky').value === 'yes';
@@ -916,12 +801,8 @@
             let new_oil = vol - (new_powder_vol + ba_vol + bb_vol);
             if(new_oil < 0) new_oil = 0;
 
-            setVal('adj_res_oil', new_oil);
-            setVal('adj_res_comp', w_final);
-            setVal('adj_res_comp_vol', new_powder_vol);
-            setVal('adj_res_ba', ba_vol);
-            setVal('adj_res_bb', bb_vol);
-            setVal('adj_res_total', vol);
+            setVal('adj_res_oil', new_oil); setVal('adj_res_comp', w_final); setVal('adj_res_comp_vol', new_powder_vol);
+            setVal('adj_res_ba', ba_vol); setVal('adj_res_bb', bb_vol); setVal('adj_res_total', vol);
 
             let vials = vol / 10.5;
             document.getElementById('vials_total').value = Math.floor(vials);
@@ -932,41 +813,7 @@
             );
         }
 
-        function setVal(id, val) {
-            document.getElementById(id).value = val.toFixed(2);
-        }
-
-        // --- LANGUAGE ---
-        let lang = 'en';
-        const txt = {
-            en: {
-                h_std: "Steroid Homebrew Calculator", h_adj: "Adjusted For Overdose",
-                l_comp: "Select Compound", l_oil: "Oil in ml's", l_dose: "Dosage in mg",
-                l_disp: "Displacement Factor", l_pure: "Compound Purity", l_adj: "Adjust for 100%",
-                l_cheeky: "Add a cheeky bit?", l_vials: "No of Vials",
-                c_norm: "Composition (Normal)", c_adj: "Composition (Adjusted)"
-            },
-            pt: {
-                h_std: "Calculadora Padrão", h_adj: "Ajuste de Sobredose",
-                l_comp: "Selecionar Composto", l_oil: "Volume Óleo (ml)", l_dose: "Dosagem (mg)",
-                l_disp: "Fator Deslocamento", l_pure: "Pureza do Pó", l_adj: "Ajustar p/ 100%",
-                l_cheeky: "Adicionar chorinho?", l_vials: "Qtd. Frascos",
-                c_norm: "Composição (Normal)", c_adj: "Composição (Ajustada)"
-            }
-        };
-
-        function toggleLang() {
-            lang = lang === 'en' ? 'pt' : 'en';
-            for (let k in txt[lang]) {
-                let el = document.querySelector(`[data-lang="${k}"]`);
-                if (el) el.innerText = txt[lang][k];
-            }
-            if(chartNormal) {
-                chartNormal.options.plugins.legend.labels.font.family = "'Courier New', monospace"; 
-                chartNormal.update();
-                chartAdjusted.update();
-            }
-        }
+        function setVal(id, val) { document.getElementById(id).value = val.toFixed(2); }
     </script>
 </body>
 </html>
