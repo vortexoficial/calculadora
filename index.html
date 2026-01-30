@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GHOST_LAB // CALCULATOR FINAL READABLE</title>
+    <title>CALCULATOR FINAL READABLE</title>
+
+    <meta name="description" content="Professional Steroid Homebrew Calculator - GHOST_LAB Terminal Interface">
+    <meta property="og:title" content="GHOST_LAB // CALCULATOR">
+    <meta property="og:description" content="Calculadora avançada para homebrew com ajuste de pureza e sobredose.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text y='50%' x='50%' domaint-baseline='middle' text-anchor='middle' font-family='monospace' font-size='60' fill='%2300ff41' font-weight='bold'>GL</text></svg>">
+    <meta name="theme-color" content="#0d0208">
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0208'/><path d='M30 30 L70 30 L70 70 L30 70 Z' stroke='%2300ff41' stroke-width='5' fill='none'/><text x='50' y='65' font-family='monospace' font-size='40' font-weight='bold' fill='%234d6aff' text-anchor='middle'>%23</text></svg>">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -33,7 +43,7 @@
         }
         
         /* Padding seguro para mobile */
-        body { padding: 15px; padding-top: 30px; /* Mais espaço no topo pois removemos o título */ }
+        body { padding: 15px; padding-top: 30px; }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
@@ -63,16 +73,14 @@
         }
         .panel:hover { border-color: var(--matrix-green); }
 
-        /* Header Azul Legível */
         .panel-header {
-            background: rgba(0, 0, 50, 0.8); /* Fundo azulado suave */
+            background: rgba(0, 0, 50, 0.8);
             color: var(--electric-blue);
             font-weight: bold; padding: 12px; text-transform: uppercase;
             font-size: 1.1em; border-bottom: 1px solid var(--border-dim);
             letter-spacing: 1px;
         }
 
-        /* --- TABELA --- */
         .calc-row {
             display: grid; grid-template-columns: 1.4fr 2fr;
             border-bottom: 1px solid var(--border-dim); align-items: stretch;
@@ -96,7 +104,6 @@
             font-size: 0.7em; color: #008800; margin-top: 4px; text-transform: uppercase;
         }
 
-        /* Inputs Verdes */
         input {
             width: 100%; background: #000; border: 1px solid #004400;
             color: var(--matrix-green); padding: 8px 10px;
@@ -106,13 +113,11 @@
         }
         input:focus { border-color: var(--matrix-green); box-shadow: 0 0 8px rgba(0, 255, 65, 0.3); background: #001100; }
 
-        /* Resultados Azuis Legíveis */
         input.result-field {
             color: var(--electric-blue) !important; border-color: var(--electric-blue) !important;
             background: rgba(0, 0, 40, 0.6) !important; pointer-events: none;
         }
 
-        /* --- CUSTOM SELECT --- */
         select { display: none !important; }
         .custom-select-wrapper { position: relative; user-select: none; width: 100%; }
         .custom-select-trigger {
@@ -124,7 +129,6 @@
         }
         .custom-select-trigger:after { content: "▼"; font-size: 10px; margin-left: 10px; }
         
-        /* Lista */
         .custom-options {
             position: absolute; display: block; top: 100%; left: 0; right: 0;
             background: #000; border: 1px solid var(--matrix-green); border-top: none;
@@ -133,7 +137,6 @@
             max-height: 300px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.9);
         }
         
-        /* Desktop List Maior */
         @media (min-width: 1024px) {
             .custom-options { max-height: 800px !important; }
         }
@@ -145,11 +148,7 @@
         }
         .custom-option:hover { color: #000; background: var(--matrix-green); }
         .custom-option.selected { color: var(--matrix-green); background: #001100; border-left: 3px solid var(--matrix-green); }
-        .custom-options::-webkit-scrollbar { width: 5px; }
-        .custom-options::-webkit-scrollbar-track { background: #000; }
-        .custom-options::-webkit-scrollbar-thumb { background: #004400; }
 
-        /* --------------------------- */
         .input-group-append { display: flex; align-items: center; width: 100%; }
         .input-group-append input { border-right: none; flex: 1; }
         .unit-tag {
@@ -157,7 +156,6 @@
             color: var(--matrix-green); padding: 8px 12px; font-size: 11px;
             height: 100%; display: flex; align-items: center; justify-content: center; min-width: 50px;
         }
-        /* Unit tag Azul */
         .unit-tag.blue {
             color: var(--electric-blue); border-color: var(--electric-blue);
             background: rgba(0,0,60,0.5);
@@ -169,7 +167,6 @@
             text-align: right; border-top: 1px solid var(--matrix-green);
         }
 
-        /* Caixa de Frascos */
         .vials-box {
             margin-top: 20px; border: 1px solid var(--electric-blue);
             background: #000; display: grid; grid-template-columns: 150px 1fr;
@@ -181,7 +178,6 @@
             padding: 15px; text-transform: uppercase;
         }
 
-        /* --- GRÁFICOS --- */
         .charts-wrapper {
             margin-top: 30px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
@@ -203,7 +199,6 @@
         
         .chart-container-inner { position: relative; height: 300px; width: 100%; overflow: hidden; }
 
-        /* --- LOADER --- */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999;
@@ -222,7 +217,6 @@
             cursor: pointer; transition: 0.3s; z-index: 100; background: #000;
         }
         #lang-btn:hover { color: var(--matrix-green); border-color: var(--matrix-green); }
-
     </style>
 </head>
 <body>
