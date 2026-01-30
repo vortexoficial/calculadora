@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GHOST_LAB // CALCULATOR FINAL SATURATED</title>
+    <title>GHOST_LAB // CALCULATOR FINAL READABLE</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
-            /* --- CORES: VERDE HACKER + AZUL SATURADO (CORRIGIDO) --- */
-            --matrix-green: #00ff41; 
+            /* --- PALETA DE CORES (LEITURA OTIMIZADA) --- */
+            --matrix-green: #00ff41;  /* Verde Hacker */
             --matrix-dark: #0d0208;
             
-            /* AZUL ELÉTRICO PURO (Saturação Máxima) */
-            --electric-blue: #0033ff; 
-            --blue-glow: 0 0 15px rgba(0, 51, 255, 0.9); /* Brilho intenso */
+            /* AZUL LEGÍVEL (Menos saturação, mais luminosidade) */
+            --electric-blue: #4d6aff; 
+            --blue-glow: 0 0 10px rgba(77, 106, 255, 0.6); /* Glow mais suave */
 
             --terminal-bg: #000000;
             --panel-bg: rgba(0, 20, 0, 0.95);
@@ -24,7 +24,7 @@
 
         /* --- GLOBAL RESET & SCROLL FIX --- */
         html, body {
-            width: 100%; max-width: 100%; overflow-x: hidden; /* Trava scroll horizontal */
+            width: 100%; max-width: 100%; overflow-x: hidden;
             margin: 0; padding: 0;
             background-color: var(--terminal-bg);
             color: var(--matrix-green);
@@ -33,7 +33,7 @@
         }
         
         /* Padding seguro para mobile */
-        body { padding: 15px; }
+        body { padding: 15px; padding-top: 30px; /* Mais espaço no topo pois removemos o título */ }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
@@ -50,16 +50,6 @@
             z-index: 3; padding-bottom: 60px;
         }
 
-        /* Título Azul Saturado */
-        h1 {
-            text-align: center; font-size: 2.2em; margin-bottom: 20px;
-            border-bottom: 2px solid var(--electric-blue);
-            padding-bottom: 15px; letter-spacing: 4px;
-            text-shadow: var(--blue-glow); text-transform: uppercase;
-            color: var(--electric-blue);
-            word-wrap: break-word; /* Evita quebra em telas muito pequenas */
-        }
-
         /* --- GRID SYSTEM --- */
         .main-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;
@@ -73,14 +63,13 @@
         }
         .panel:hover { border-color: var(--matrix-green); }
 
-        /* Header Azul */
+        /* Header Azul Legível */
         .panel-header {
-            background: rgba(0, 0, 80, 0.9); /* Fundo azul profundo */
+            background: rgba(0, 0, 50, 0.8); /* Fundo azulado suave */
             color: var(--electric-blue);
             font-weight: bold; padding: 12px; text-transform: uppercase;
             font-size: 1.1em; border-bottom: 1px solid var(--border-dim);
             letter-spacing: 1px;
-            text-shadow: 0 0 5px var(--electric-blue);
         }
 
         /* --- TABELA --- */
@@ -100,7 +89,7 @@
 
         .calc-input-area {
             padding: 8px; position: relative; display: flex; flex-direction: column;
-            justify-content: center; min-width: 0; /* Evita overflow */
+            justify-content: center; min-width: 0;
         }
 
         .desc {
@@ -113,15 +102,14 @@
             color: var(--matrix-green); padding: 8px 10px;
             font-family: 'Courier New', Courier, monospace; font-size: 14px;
             font-weight: bold; outline: none; transition: 0.3s; text-transform: uppercase;
-            min-width: 0; /* Importante para flex/grid */
+            min-width: 0;
         }
         input:focus { border-color: var(--matrix-green); box-shadow: 0 0 8px rgba(0, 255, 65, 0.3); background: #001100; }
 
-        /* Resultados Azuis Saturados */
+        /* Resultados Azuis Legíveis */
         input.result-field {
             color: var(--electric-blue) !important; border-color: var(--electric-blue) !important;
-            background: rgba(0, 0, 50, 0.6) !important; pointer-events: none;
-            text-shadow: 0 0 5px var(--electric-blue);
+            background: rgba(0, 0, 40, 0.6) !important; pointer-events: none;
         }
 
         /* --- CUSTOM SELECT --- */
@@ -169,10 +157,10 @@
             color: var(--matrix-green); padding: 8px 12px; font-size: 11px;
             height: 100%; display: flex; align-items: center; justify-content: center; min-width: 50px;
         }
+        /* Unit tag Azul */
         .unit-tag.blue {
             color: var(--electric-blue); border-color: var(--electric-blue);
-            background: rgba(0,0,80,0.6);
-            text-shadow: 0 0 5px var(--electric-blue);
+            background: rgba(0,0,60,0.5);
         }
 
         .results-divider {
@@ -181,6 +169,7 @@
             text-align: right; border-top: 1px solid var(--matrix-green);
         }
 
+        /* Caixa de Frascos */
         .vials-box {
             margin-top: 20px; border: 1px solid var(--electric-blue);
             background: #000; display: grid; grid-template-columns: 150px 1fr;
@@ -192,19 +181,18 @@
             padding: 15px; text-transform: uppercase;
         }
 
-        /* --- GRÁFICOS (FIX MOBILE SCROLL) --- */
+        /* --- GRÁFICOS --- */
         .charts-wrapper {
             margin-top: 30px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-            width: 100%; /* Garante largura controlada */
+            width: 100%;
         }
         @media (max-width: 800px) { .charts-wrapper { grid-template-columns: 1fr; } }
 
         .chart-card {
             background: #000; border: 1px solid var(--border-dim);
             padding: 15px; position: relative;
-            width: 100%; min-width: 0; /* Impede overflow flex */
-            overflow: hidden; /* Corta qualquer excesso do canvas */
+            width: 100%; min-width: 0; overflow: hidden;
         }
         .chart-card h3 {
             text-align: center; margin: 0 0 15px 0; color: var(--electric-blue);
@@ -213,13 +201,7 @@
             text-shadow: var(--blue-glow);
         }
         
-        /* Container responsivo para o canvas */
-        .chart-container-inner {
-            position: relative;
-            height: 300px;
-            width: 100%;
-            overflow: hidden;
-        }
+        .chart-container-inner { position: relative; height: 300px; width: 100%; overflow: hidden; }
 
         /* --- LOADER --- */
         #boot-screen {
@@ -256,8 +238,6 @@
     <div id="lang-btn" onclick="toggleLang()">[ EN / PT ]</div>
 
     <div class="container">
-        <h1 data-lang="app_title">CALCULATOR</h1>
-
         <div class="main-grid">
             <div class="panel">
                 <div class="panel-header" data-lang="h_std">Steroid Homebrew Calculator</div>
@@ -513,7 +493,7 @@
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">BA</div>
+                    <div class="calc-label" data-lang="l_ba">BA</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
                             <input type="text" id="adj_res_ba" readonly class="result-field">
@@ -523,7 +503,7 @@
                 </div>
 
                 <div class="calc-row">
-                    <div class="calc-label">BB</div>
+                    <div class="calc-label" data-lang="l_bb">BB</div>
                     <div class="calc-input-area">
                         <div class="input-group-append">
                             <input type="text" id="adj_res_bb" readonly class="result-field">
@@ -712,7 +692,7 @@
         let chartAdjusted = null;
 
         function initCharts() {
-            Chart.defaults.color = '#0033ff'; /* Azul Saturado */
+            Chart.defaults.color = '#4d6aff'; /* Texto Azul Legível */
             Chart.defaults.font.family = "'Courier New', monospace";
 
             const ctx1 = document.getElementById('chartNormal').getContext('2d');
@@ -725,7 +705,7 @@
             };
 
             const colors = {
-                oil: '#0033ff',      /* Azul Saturado */
+                oil: '#4d6aff',      /* Azul */
                 powder: '#00ff41',   
                 ba: '#004400',       
                 bb: '#002200'        
