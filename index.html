@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHOST_LAB // CALCULATOR</title>
+    <style>
+        :root {
+            --matrix-green: #00ff41;
+            --matrix-dark: #0d0208;
+            --terminal-bg: #000000;
+            --panel-bg: rgba(0, 20, 0, 0.85);
+            --border-dim: #004400;
+            --border-bright: #00ff41;
+            --text-glow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--terminal-bg);
+            color: var(--matrix-green);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            font-size: 13px;
+            overflow-x: hidden;
+        }
+
+        /* Efeito Scanlines (TV Antiga) */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 3;
+            padding-bottom: 60px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--matrix-green);
+            padding-bottom: 15px;
+            letter-spacing: 6px;
+            text-shadow: var(--text-glow);
+            text-transform: uppercase;
+        }
+
+        /* --- GRID SYSTEM --- */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .panel {
+            border: 1px solid var(--border-dim);
+            background: var(--panel-bg);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.05);
+            transition: border-color 0.3s;
+        }
+
+        .panel:hover { border-color: var(--border-bright); }
+
+        .panel-header {
+            background: rgba(0, 50, 0, 0.9);
+            color: var(--matrix-green);
+            font-weight: bold;
+            padding: 12px;
+            text-transform: uppercase;
+            font-size: 1.1em;
+            border-bottom: 1px solid var(--border-dim);
+            letter-spacing: 1px;
+        }
+
+        /* --- LINHAS DA TABELA --- */
+        .calc-row {
+            display: grid;
+            grid-template-columns: 1.4fr 2fr;
+            border-bottom: 1px solid var(--border-dim);
+            align-items: stretch;
+        }
+        .calc-row:last-child { border-bottom: none; }
+        
+        .calc-label {
+            padding: 12px;
+            border-right: 1px solid var(--border-dim);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 20, 0, 0.3);
+            font-size: 0.9em;
+        }
+
+        .calc-input-area {
+            padding: 8px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0; /* Correção para Grid overflow */
+        }
+
+        .desc {
+            font-size: 0.7em;
+            color: #008800;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* --- INPUTS HACKER --- */
+        input, select {
+            width: 100%;
+            background: #000;
+            border: 1px solid #004400;
+            color: var(--matrix-green);
+            padding: 8px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            outline: none;
+            transition: 0.3s;
+            text-transform: uppercase;
+            
+            /* Correção de Layout Mobile */
+            max-width: 100%; 
+            white-space: nowrap;
+            overflow: hidden; 
+            text-overflow: ellipsis;
+        }
+
+        /* Estilização das Opções do Dropdown (Para ficarem escuras) */
+        select option {
+            background-color: #000;
+            color: var(--matrix-green);
+            padding: 10px;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--matrix-green);
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+            background: #001100;
+        }
+
+        /* Grupo de Input com Unidade na direita */
+        .input-group-append {
+            display: flex;
+            align-items: center;
+        }
+        .input-group-append input { 
+            border-right: none; 
+        }
+        .unit-tag {
+            background: #002200;
+            border: 1px solid #004400;
+            border-left: none;
+            color: var(--matrix-green);
+            padding: 8px 12px;
+            font-size: 11px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+        }
+
+        /* Campos Somente Leitura (Results) */
+        .readonly-input {
+            background: rgba(0, 255, 65, 0.05) !important;
+            border-color: #003300 !important;
+            color: #88ff88 !important;
+            cursor: default;
+        }
+
+        /* --- CABEÇALHO DE RESULTADOS --- */
+        .results-divider {
+            background: var(--border-dim);
+            color: #000;
+            font-weight: bold;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            text-align: right;
+            border-top: 1px solid var(--matrix-green);
+        }
+
+        /* --- VIALS BOX (RODAPÉ) --- */
+        .vials-box {
+            margin-top: 20px;
+            border: 1px solid var(--matrix-green);
+            background: #000;
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            box-shadow: var(--text-glow);
+        }
+        .vials-label {
+            background: var(--matrix-green);
+            color: #000;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            text-transform: uppercase;
+        }
+
+        /* --- LOADER --- */
+        #boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .hidden { display: none !important; }
+        
+        .progress-frame {
+            width: 300px; padding: 4px; 
+            border: 1px solid var(--matrix-green);
+            box-shadow: 0 0 10px var(--matrix-green);
+            margin-top: 10px;
+        }
+        .progress-bar { height: 20px; background: var(--matrix-green); width: 0%; }
+
+        /* Botão Idioma Discreto */
+        #lang-btn {
+            position: fixed; bottom: 15px; right: 15px;
+            color: #004400; border: 1px solid #004400;
+            padding: 5px 8px; font-size: 10px; cursor: pointer;
+            transition: 0.3s; z-index: 100;
+        }
+        #lang-btn:hover { color: var(--matrix-green); border-color: var(--matrix-green); }
+
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <div id="boot-text" style="color: #0f0; font-weight: bold;">SYSTEM_INIT...</div>
+        <div class="progress-frame">
+            <div class="progress-bar" id="loader-bar"></div>
+        </div>
+        <div id="boot-percent" style="margin-top: 5px; font-size: 10px; color: #008800;">0%</div>
+    </div>
+
+    <div id="lang-btn" onclick="toggleLang()">[ EN / PT ]</div>
+
+    <div class="container">
+        <h1>CALCULATOR</h1>
+
+        <div class="main-grid">
+            
+            <div class="panel">
+                <div class="panel-header" data-lang="h_std">Steroid Homebrew Calculator</div>
+                
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_comp">Select Compound</div>
+                    <div class="calc-input-area">
+                        <select id="compound">
+                            <option value="" disabled selected>Open this select menu</option>
+                            <option value="0.935">Masterone Propionate</option>
+                            <option value="0.96">Nandrolone Decanoate</option>
+                            <option value="0.8">Testosterone Base</option>
+                            <option value="0.92">Testosterone Cypionate</option>
+                            <option value="0.94">Testosterone Decanoate</option>
+                            <option value="0.935">Testosterone Enanthate</option>
+                            <option value="0.91">Testosterone Isocaproate</option>
+                            <option value="0.88">Testosterone Phenylpropionate</option>
+                            <option value="0.89">Testosterone Propionate</option>
+                            <option value="0.85">Trenbolone Acetate</option>
+                            <option value="0.9">Trenbolone Enanthate</option>
+                            <option value="0.75">UNKNOWN</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_oil">Oil in ml's</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="number" id="volume" value="2000">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                        <span class="desc">Batch Size (100ml = 100)</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_dose">Dosage in mg</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="number" id="dosage" value="300">
+                            <div class="unit-tag">mg/ml</div>
+                        </div>
+                        <span class="desc">Concentration</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_disp">Displacement Factor</div>
+                    <div class="calc-input-area">
+                        <input type="number" id="displacement" value="" placeholder="0.000" step="0.001">
+                        <span class="desc">ml per gram</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BA Concentration</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="number" id="ba_conc" value="1">
+                            <div class="unit-tag">%</div>
+                        </div>
+                        <span class="desc">Benzyl Alcohol</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BB Concentration</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="number" id="bb_conc" value="15">
+                            <div class="unit-tag">%</div>
+                        </div>
+                        <span class="desc">Benzyl Benzoate</span>
+                    </div>
+                </div>
+
+                <div class="results-divider">RESULTS (STANDARD)</div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Oil</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_oil" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Compound</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_comp_g" readonly class="readonly-input">
+                            <div class="unit-tag">grams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Compound VOL</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_comp_vol" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BA</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_ba" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BB</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_bb" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" style="color: #fff;">Final Volume</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="res_total" readonly class="readonly-input" style="color: #fff !important; border-color: #fff !important;">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header" data-lang="h_adj">Adjusted For Overdose</div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_pure">Compound Purity</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="number" id="purity" value="97.80">
+                            <div class="unit-tag">%</div>
+                        </div>
+                        <span class="desc">Raw Purity (100ml = 100)</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_adj">Adjust for 100%</div>
+                    <div class="calc-input-area">
+                        <select id="sel_purity">
+                            <option value="" disabled selected>Open this select menu</option>
+                            <option value="no">No</option>
+                            <option value="yes">Yes (Bring to 100%)</option>
+                        </select>
+                        <span class="desc">Correct raw impurity</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Total Compound Weight</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_weight_1" readonly class="readonly-input">
+                            <div class="unit-tag">grams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" data-lang="l_cheeky">Add a cheeky bit?</div>
+                    <div class="calc-input-area">
+                        <select id="sel_cheeky">
+                            <option value="" disabled selected>Open this select menu</option>
+                            <option value="no">No</option>
+                            <option value="yes">Yes (+5% measure)</option>
+                        </select>
+                        <span class="desc">+5% for good measure</span>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Total Compound Weight</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_weight_final" readonly class="readonly-input" style="border-color: #fff !important; color: #fff !important;">
+                            <div class="unit-tag">grams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-divider">RESULTS (ADJUSTED)</div>
+
+                <div class="calc-row">
+                    <div class="calc-label">OIL</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_oil" readonly class="readonly-input" style="background: #002200 !important; color: #fff !important; font-weight: bold;">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Compound</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_comp" readonly class="readonly-input">
+                            <div class="unit-tag">grams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">Compound VOL</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_comp_vol" readonly class="readonly-input" style="background: #002200 !important; color: #fff !important; font-weight: bold;">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BA</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_ba" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label">BB</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_bb" readonly class="readonly-input">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calc-row">
+                    <div class="calc-label" style="color: #fff;">Final Adjusted Volume</div>
+                    <div class="calc-input-area">
+                        <div class="input-group-append">
+                            <input type="text" id="adj_res_total" readonly class="readonly-input" style="color: #fff !important; border-color: #fff !important;">
+                            <div class="unit-tag">ml</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="vials-box">
+            <div class="vials-label" data-lang="l_vials">No of Vials</div>
+            <div style="display: flex; align-items: center; padding: 0 15px;">
+                <input type="text" id="vials_total" readonly style="border:none; font-size: 1.5em; background: transparent; box-shadow: none;">
+                <span style="color: #008800; font-size: 0.9em; white-space: nowrap;">(10.5 ml per vial)</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- ANIMAÇÃO DE BOOT ---
+        window.onload = function() {
+            const bar = document.getElementById('loader-bar');
+            const txt = document.getElementById('boot-text');
+            const per = document.getElementById('boot-percent');
+            const screen = document.getElementById('boot-screen');
+            
+            let width = 0;
+            const names = ["ANALYZING...", "DECRYPTING...", "LOADING MODULES...", "CALCULATING...", "ACCESSING..."];
+            
+            const interval = setInterval(() => {
+                width += 2;
+                bar.style.width = width + "%";
+                per.innerText = width + "%";
+                
+                if (width % 15 === 0) {
+                    txt.innerText = names[Math.floor(Math.random() * names.length)];
+                }
+
+                if (width >= 100) {
+                    clearInterval(interval);
+                    txt.innerText = "SYSTEM READY";
+                    setTimeout(() => {
+                        screen.style.opacity = '0';
+                        setTimeout(() => screen.classList.add('hidden'), 500);
+                    }, 300);
+                    calc(); // Calcula inicial
+                }
+            }, 30); // 1.5s total (30ms * 50 steps)
+        };
+
+        // --- LÓGICA DE CÁLCULO ---
+        const inputs = ['compound', 'volume', 'dosage', 'displacement', 'ba_conc', 'bb_conc', 'purity', 'sel_purity', 'sel_cheeky'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calc);
+            document.getElementById(id).addEventListener('change', calc);
+        });
+
+        // Atualizar displacement ao trocar composto (se usuario nao editou)
+        document.getElementById('compound').addEventListener('change', function() {
+            if(this.value) {
+                document.getElementById('displacement').value = this.value;
+                calc();
+            }
+        });
+
+        function calc() {
+            // -- Inputs Base --
+            let vol = parseFloat(document.getElementById('volume').value) || 0;
+            let dose = parseFloat(document.getElementById('dosage').value) || 0;
+            let disp = parseFloat(document.getElementById('displacement').value) || 0;
+            let ba_p = parseFloat(document.getElementById('ba_conc').value) || 0;
+            let bb_p = parseFloat(document.getElementById('bb_conc').value) || 0;
+
+            // Se não houver displacement definido, não calcula resultados para evitar erros visuais
+            if (disp === 0) {
+                // Opcional: Zerar campos se quiser
+                return; 
+            }
+
+            // -- Cálculo Esquerda (Padrão) --
+            let powder_g = (vol * dose) / 1000;
+            let powder_vol = powder_g * disp;
+            let ba_vol = vol * (ba_p / 100);
+            let bb_vol = vol * (bb_p / 100);
+            let oil = vol - (powder_vol + ba_vol + bb_vol);
+            
+            if(oil < 0) oil = 0;
+
+            // Update UI Left
+            setVal('res_oil', oil);
+            setVal('res_comp_g', powder_g);
+            setVal('res_comp_vol', powder_vol);
+            setVal('res_ba', ba_vol);
+            setVal('res_bb', bb_vol);
+            setVal('res_total', vol);
+
+            // -- Cálculo Direita (Ajustado) --
+            let purity = parseFloat(document.getElementById('purity').value) || 100;
+            let selPurityVal = document.getElementById('sel_purity').value;
+            let selCheekyVal = document.getElementById('sel_cheeky').value;
+            
+            let do_adj = selPurityVal === 'yes';
+            let do_cheeky = selCheekyVal === 'yes';
+
+            // 1. Ajuste Pureza
+            let w1 = powder_g;
+            if (do_adj && purity > 0) {
+                w1 = powder_g * (100 / purity);
+            }
+            setVal('adj_weight_1', w1);
+
+            // 2. Ajuste Cheeky (+5%)
+            let w_final = w1;
+            if (do_cheeky) {
+                w_final = w1 * 1.05;
+            }
+            setVal('adj_weight_final', w_final);
+
+            // 3. Volumes Finais
+            // O volume de pó aumenta, então o volume de óleo deve diminuir para manter o Total igual.
+            let new_powder_vol = w_final * disp;
+            let new_oil = vol - (new_powder_vol + ba_vol + bb_vol);
+
+            if(new_oil < 0) new_oil = 0;
+
+            // Update UI Right
+            setVal('adj_res_oil', new_oil);
+            setVal('adj_res_comp', w_final);
+            setVal('adj_res_comp_vol', new_powder_vol);
+            setVal('adj_res_ba', ba_vol); // BA não muda
+            setVal('adj_res_bb', bb_vol); // BB não muda
+            setVal('adj_res_total', vol); // Volume final alvo
+
+            // -- Vials --
+            let vials = vol / 10.5;
+            document.getElementById('vials_total').value = Math.floor(vials);
+        }
+
+        function setVal(id, val) {
+            document.getElementById(id).value = val.toFixed(2);
+        }
+
+        // --- IDIOMA ---
+        let lang = 'en';
+        const txt = {
+            en: {
+                h_std: "Steroid Homebrew Calculator", h_adj: "Adjusted For Overdose",
+                l_comp: "Select Compound", l_oil: "Oil in ml's", l_dose: "Dosage in mg",
+                l_disp: "Displacement Factor", l_pure: "Compound Purity", l_adj: "Adjust for 100%",
+                l_cheeky: "Add a cheeky bit?", l_vials: "No of Vials"
+            },
+            pt: {
+                h_std: "Calculadora Padrão", h_adj: "Ajuste de Sobredose",
+                l_comp: "Selecionar Composto", l_oil: "Volume Óleo (ml)", l_dose: "Dosagem (mg)",
+                l_disp: "Fator Deslocamento", l_pure: "Pureza do Pó", l_adj: "Ajustar p/ 100%",
+                l_cheeky: "Adicionar chorinho?", l_vials: "Qtd. Frascos"
+            }
+        };
+
+        function toggleLang() {
+            lang = lang === 'en' ? 'pt' : 'en';
+            for (let k in txt[lang]) {
+                let el = document.querySelector(`[data-lang="${k}"]`);
+                if (el) el.innerText = txt[lang][k];
+            }
+        }
+    </script>
+</body>
+</html>
